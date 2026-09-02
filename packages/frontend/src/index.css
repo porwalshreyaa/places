@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+/* Force handwritten font for ALL base HTML elements, inputs, buttons, and custom tags */
+* {
+  font-family: 'Kalam', 'Caveat', cursive !important;
+}
+
+/* Override Tailwind's built-in font utility classes to ensure no default system font leaks */
+.font-serif, .font-sans, .font-mono {
+  font-family: 'Kalam', 'Caveat', cursive !important;
+}
+
+/* Allow Caveat class to explicitly override to Caveat cursive where desired */
+.font-caveat {
+  font-family: 'Caveat', cursive !important;
+}
+
+/* Allow Kalam class to explicitly override to Kalam cursive where desired */
+.font-kalam {
+  font-family: 'Kalam', cursive !important;
+}
+
+
+@theme {
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+}
+
+:root, .theme-baby-girl {
+  --brand-50: #fff1f2;
+  --brand-100: #ffe4e6;
+  --brand-200: #fecdd3;
+  --brand-300: #fda4af;
+  --brand-400: #fb7185;
+  --brand-500: #f43f5e;
+  --brand-600: #e11d48;
+  --brand-700: #be123c;
+}
+
+.theme-ocean {
+  --brand-50: #f0fdfa;
+  --brand-100: #ccfbf1;
+  --brand-200: #99f6e4;
+  --brand-300: #5eead4;
+  --brand-400: #2dd4bf;
+  --brand-500: #14b8a6;
+  --brand-600: #0d9488;
+  --brand-700: #0f766e;
+}
+
+.theme-forest {
+  --brand-50: #f0fdf4;
+  --brand-100: #dcfce7;
+  --brand-200: #bbf7d0;
+  --brand-300: #86efac;
+  --brand-400: #4ade80;
+  --brand-500: #22c55e;
+  --brand-600: #16a34a;
+  --brand-700: #15803d;
+}
+
+.theme-sunset {
+  --brand-50: #fffbeb;
+  --brand-100: #fef3c7;
+  --brand-200: #fde68a;
+  --brand-300: #fcd34d;
+  --brand-400: #fbbf24;
+  --brand-500: #f59e0b;
+  --brand-600: #d97706;
+  --brand-700: #b45309;
+}
+
+.theme-lavender {
+  --brand-50: #faf5ff;
+  --brand-100: #f3e8ff;
+  --brand-200: #e9d5ff;
+  --brand-300: #d8b4fe;
+  --brand-400: #c084fc;
+  --brand-500: #a855f7;
+  --brand-600: #9333ea;
+  --brand-700: #7e22ce;
+}
+
+/* Scrapbook Textures & Edges */
+.paper-texture {
+  background-color: #fdfbf7;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+.torn-edge-top {
+  clip-path: polygon(0% 10px, 5% 0px, 10% 12px, 15% 2px, 20% 10px, 25% 4px, 30% 11px, 35% 1px, 40% 13px, 45% 3px, 50% 9px, 55% 0px, 60% 12px, 65% 2px, 70% 10px, 75% 5px, 80% 13px, 85% 1px, 90% 11px, 95% 4px, 100% 10px, 100% 100%, 0% 100%);
+}
+
+.torn-edge-bottom {
+  clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 10px), 95% 100%, 90% calc(100% - 12px), 85% calc(100% - 2px), 80% calc(100% - 11px), 75% calc(100% - 4px), 70% calc(100% - 10px), 65% calc(100% - 1px), 60% calc(100% - 13px), 55% calc(100% - 5px), 50% calc(100% - 9px), 45% 100%, 40% calc(100% - 12px), 35% calc(100% - 3px), 30% calc(100% - 10px), 25% calc(100% - 2px), 20% calc(100% - 11px), 15% calc(100% - 4px), 10% calc(100% - 10px), 5% calc(100% - 1px), 0% calc(100% - 10px));
+}
+
+.masking-tape {
+  position: absolute;
+  width: 120px;
+  height: 35px;
+  background-color: rgba(255, 255, 240, 0.6);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  backdrop-filter: blur(2px) sepia(20%);
+  border-radius: 2px;
+  transform: rotate(-3deg);
+  z-index: 10;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+  clip-path: polygon(2% 10%, 98% 0%, 100% 90%, 0% 100%);
+}
+
+.polaroid {
+  background: white;
+  padding: 12px 12px 48px 12px;
+  box-shadow: 2px 8px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.02);
+  transition: transform 0.2s;
+}
+.polaroid:hover {
+  transform: scale(1.02) rotate(-1deg);
+  box-shadow: 4px 12px 30px rgba(0,0,0,0.2);
+}
+
+.doodle {
+  filter: drop-shadow(1px 2px 0px rgba(0,0,0,0.1));
+  mix-blend-mode: multiply;
+}
+
+.binder-ring {
+  position: absolute;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  border: 6px solid #a3a3a3;
+  border-radius: 50%;
+  box-shadow: inset 1px 1px 3px rgba(0,0,0,0.3), 2px 2px 5px rgba(0,0,0,0.2);
+  background: transparent;
+  z-index: 20;
+}
+.binder-ring::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -15px;
+  width: 15px;
+  height: 6px;
+  background: #292524;
+  transform: translateY(-50%);
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}

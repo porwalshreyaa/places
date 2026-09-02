@@ -1,0 +1,14 @@
+{
+  "name": "ghoomi-ghoomi-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w @ghoomi/backend\" \"npm run dev -w @ghoomi/frontend\"",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}
