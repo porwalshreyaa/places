@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Pin, Calendar, MapPin, Heart, CheckSquare } from "lucide-react";
+import { Pin, Calendar, MapPin, Heart, CheckSquare, Edit3 } from "lucide-react";
 import { Destination } from "../../types";
-
+import EditCoordinatesModal from "../../components/EditCoordinatesModal";
 
 interface ScrapbookListProps {
   destinations: Destination[];
   onSelect: (destination: Destination) => void;
+  onUpdateDestination?: (destination: Destination) => void;
   onAddNew: () => void;
   isEditable: boolean;
 }
@@ -26,9 +27,12 @@ const CARD_ROTATIONS = [-3, 2, -1, 3, -2, 4, -4];
 export default function ScrapbookList({
   destinations,
   onSelect,
+  onUpdateDestination,
   onAddNew,
   isEditable,
 }: ScrapbookListProps) {
+  const [editingCoordsDest, setEditingCoordsDest] = useState<Destination | null>(null);
+
   return (
     <div className="w-full">
       {/* Whimsical Board Header with a torn page look */}
@@ -97,7 +101,7 @@ export default function ScrapbookList({
                 transition={{ duration: 0.3, delay: index * 0.05 }}
                 onClick={() => onSelect(dest)}
                 style={{ rotate: `${rotation}deg` }}
-                className="bg-white p-4 pb-6 rounded-xs shadow-lg hover:shadow-2xl border border-stone-200/50 cursor-pointer flex flex-col justify-between transition-shadow relative"
+                className="bg-white p-4 pb-6 rounded-xs shadow-lg hover:shadow-2xl border border-stone-200/50 cursor-pointer flex flex-col justify-between transition-shadow relative group/card"
               >
                 {/* Torn Washi tape at the top of Polaroid */}
                 <div className={`absolute -top-3.5 left-1/2 transform -translate-x-1/2 rotate-${rotation > 0 ? "2" : "-2"} w-32 h-6 px-3 py-0.5 border text-[10px] text-center font-mono font-bold tracking-wider select-none ${tapeColor}`}>
@@ -132,7 +136,22 @@ export default function ScrapbookList({
                       <h4 className="font-serif text-lg font-bold tracking-tight leading-snug line-clamp-1 hover:text-brand-500 transition-colors">
                         {dest.name}
                       </h4>
-                      <MapPin className="w-4 h-4 text-brand-400 shrink-0" />
+                      <div className="flex items-center gap-1">
+                        {isEditable && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingCoordsDest(dest);
+                            }}
+                            className="p-1 rounded-full text-stone-400 hover:text-brand-500 hover:bg-brand-50 transition-colors"
+                            title="Edit map coordinates"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <MapPin className="w-4 h-4 text-brand-400 shrink-0" />
+                      </div>
                     </div>
 
                     <p className="font-sans text-xs text-stone-500 line-clamp-3 italic leading-relaxed mb-4">
@@ -170,6 +189,19 @@ export default function ScrapbookList({
             );
           })}
         </div>
+      )}
+
+      {editingCoordsDest && (
+        <EditCoordinatesModal
+          destination={editingCoordsDest}
+          onClose={() => setEditingCoordsDest(null)}
+          onSave={(updated) => {
+            if (onUpdateDestination) {
+              onUpdateDestination(updated);
+            }
+            setEditingCoordsDest(null);
+          }}
+        />
       )}
     </div>
   );

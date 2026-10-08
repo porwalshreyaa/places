@@ -262,6 +262,14 @@ export default function ScrapbookLayout({
                         if (!isEditable) return;
                         handleOpenNewModalWithCoords(coords);
                       }}
+                      onUpdateDestinationCoords={(id, coords) => {
+                        const updated = destinations.map((d) =>
+                          d.id === id ? { ...d, coordinates: coords } : d
+                        );
+                        if (onSaveDestinations) {
+                          onSaveDestinations(updated);
+                        }
+                      }}
                       isEditable={isEditable}
                       mapDrawings={mapDrawings}
                       onUpdateMapDrawings={onUpdateMapDrawings}
@@ -294,6 +302,7 @@ export default function ScrapbookLayout({
                 <ScrapbookList
                   destinations={destinations}
                   onSelect={(dest) => setSelectedDestination(dest)}
+                  onUpdateDestination={handleUpdateDestination}
                   onAddNew={() => {
                     setPrefilledCoords(null);
                     setShowNewModal(true);

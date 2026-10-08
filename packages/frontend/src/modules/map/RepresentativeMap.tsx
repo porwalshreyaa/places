@@ -12,6 +12,7 @@ interface MapProps {
   selectedDestination?: Destination | null;
   onPinClick: (dest: Destination) => void;
   onMapClick: (coords: { lat: number; lng: number }) => void;
+  onUpdateDestinationCoords?: (id: string, coords: { lat: number; lng: number }) => void;
   isEditable: boolean;
   mapDrawings?: MapDrawing[];
   onUpdateMapDrawings?: (drawings: MapDrawing[]) => void;
@@ -65,7 +66,7 @@ const MapViewController = ({ selectedDest, destinations }: { selectedDest?: Dest
   return null;
 };
 
-const RepresentativeMap: React.FC<MapProps> = ({ destinations, selectedDestination, onPinClick, onMapClick, isEditable, mapDrawings = [], onUpdateMapDrawings }) => {
+const RepresentativeMap: React.FC<MapProps> = ({ destinations, selectedDestination, onPinClick, onMapClick, onUpdateDestinationCoords, isEditable, mapDrawings = [], onUpdateMapDrawings }) => {
   const [hoveredDest, setHoveredDest] = useState<Destination | null>(null);
 
   // Drawing State (synchronized with props)
@@ -198,7 +199,7 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, selectedDestinati
           const markerColor = colors[i % colors.length];
           
           const iconHtml = `
-            <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); background-color: ${markerColor}; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); background-color: ${markerColor}; display: flex; align-items: center; justify-content: center; cursor: ${isEditable ? 'grab' : 'pointer'}; transition: transform 0.2s;">
               ${dest.image ? `<img src="${dest.image}" style="width: 100%; height: 100%; object-fit: cover; display: block;" onerror="this.style.display='none'" />` : ''}
             </div>
           `;
@@ -215,6 +216,7 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, selectedDestinati
               <Marker
                 position={[dest.coordinates.lat, dest.coordinates.lng]}
                 icon={customIcon}
+                draggable={isEditable}
                 eventHandlers={{
                   click: () => {
                     onPinClick(dest);
@@ -224,6 +226,16 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, selectedDestinati
                   },
                   mouseout: () => {
                     setHoveredDest(null);
+                  },
+                  dragend: (e) => {
+                    const marker = e.target;
+                    const pos = marker.getLatLng();
+                    if (onUpdateDestinationCoords) {
+                      onUpdateDestinationCoords(dest.id, {
+                        lat: parseFloat(pos.lat.toFixed(4)),
+                        lng: parseFloat(pos.lng.toFixed(4)),
+                      });
+                    }
                   }
                 }}
               />
