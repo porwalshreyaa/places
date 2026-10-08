@@ -19,7 +19,7 @@ export function LoginForm() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isLogin || username.length < 3) {

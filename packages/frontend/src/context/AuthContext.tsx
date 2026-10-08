@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Theme, MapDrawing } from '../types';
 
-interface User {
+export type UserRole = 'USER' | 'ADMIN';
+
+export interface User {
   id: string;
   username: string;
   is_public: boolean;
@@ -11,7 +13,7 @@ interface User {
   theme_subtitle: string;
   theme_id: string;
   theme: Theme | null;
-  role: 'user' | 'admin';
+  role: UserRole;
 }
 
 interface AuthContextType {
@@ -24,6 +26,11 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const normalizeUser = (userData: any): User => ({
+  ...userData,
+  role: (userData.role?.toUpperCase() as UserRole) || 'USER',
+});
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -40,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (data.error) {
             logout();
           } else {
-            setUser(data);
+            setUser(normalizeUser(data));
           }
         })
         .catch(() => logout())
@@ -53,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = (newToken: string, newUser: User) => {
     localStorage.setItem('ghoomi_token', newToken);
     setToken(newToken);
-    setUser(newUser);
+    setUser(normalizeUser(newUser));
   };
 
   const logout = () => {

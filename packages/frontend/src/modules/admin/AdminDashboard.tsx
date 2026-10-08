@@ -10,7 +10,7 @@ interface AdminStats {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { user, token, authLoading } = useAuth();
+  const { user, token, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
