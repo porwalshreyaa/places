@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import path from "path";
 import fs from "fs";
 import { config } from './config/env';
@@ -13,6 +14,12 @@ import adminRoutes from './routes/admin.routes';
 
 const app = express();
 const PORT = config.port;
+
+// Enable CORS for cross-origin frontend requests
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 
 // Increase payload limits for base64 photo uploads
 app.use(express.json({ limit: "15mb" }));
@@ -39,6 +46,31 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/themes', themeRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Fallback for unmatched API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: `API route ${req.originalUrl} not found` });
+});
+
+// ----------------------------------------
+// SERVE FRONTEND (PRODUCTION / MONOLITH)
+// ----------------------------------------
+
+const FRONTEND_DIST = path.resolve(process.cwd(), "../frontend/dist");
+const LOCAL_FRONTEND_DIST = path.resolve(process.cwd(), "packages/frontend/dist");
+
+const staticDir = fs.existsSync(FRONTEND_DIST) 
+  ? FRONTEND_DIST 
+  : fs.existsSync(LOCAL_FRONTEND_DIST) 
+    ? LOCAL_FRONTEND_DIST 
+    : null;
+
+if (staticDir) {
+  app.use(express.static(staticDir));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(staticDir, "index.html"));
+  });
+}
+
 // ----------------------------------------
 // START SERVER
 // ----------------------------------------
@@ -48,8 +80,9 @@ async function start() {
     console.log(`Backend API server running on http://localhost:${PORT}`);
   });
 
-  server.on('error', (err: any) => {
-    if (err.code === 'EADDRINUSE') {
+  server.on('error', (err: unknown) => {
+    const errorObj = err as { code?: string };
+    if (errorObj.code === 'EADDRINUSE') {
       console.error(`\n❌ ERROR: Port ${PORT} is already in use.`);
       console.error(`👉 Please kill the existing process using port ${PORT} and try again.\n`);
       process.exit(1);

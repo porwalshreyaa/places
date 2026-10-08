@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "motion/react";
 import { X, MapPin, Image as ImageIcon, Sparkles, AlertCircle, UploadCloud } from "lucide-react";
 import { Destination } from "../types";
+import { api } from "../utils/api";
 
 interface NewDestinationModalProps {
   initialCoords: { lat: number; lng: number } | null;
@@ -68,12 +69,7 @@ export default function NewDestinationModal({
     setIsUploading(true);
     setUploadError(null);
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64Str, filename }),
-      });
-      const data = await response.json();
+      const data = await api.post<{ success: boolean; url?: string; error?: string }>("/api/upload", { image: base64Str, filename });
       if (data.success && data.url) {
         setCustomImage(data.url);
         setImage(data.url);

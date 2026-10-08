@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Users, MapPin, Palette, Activity, ShieldAlert, ArrowLeft } from 'lucide-react';
+import { api } from '../../utils/api';
 
 interface AdminStats {
   totalUsers: number;
@@ -28,14 +29,10 @@ export const AdminDashboard: React.FC = () => {
     if (token && user?.role === 'ADMIN') {
       const fetchStats = async () => {
         try {
-          const res = await fetch('/api/admin/stats', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (!res.ok) throw new Error('Failed to fetch admin stats');
-          const data = await res.json();
+          const data = await api.get<AdminStats>('/api/admin/stats');
           setStats(data);
-        } catch (err: any) {
-          setError(err.message);
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : String(err));
         } finally {
           setLoading(false);
         }

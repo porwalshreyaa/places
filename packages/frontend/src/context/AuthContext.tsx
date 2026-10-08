@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Theme, MapDrawing } from '../types';
+import { api } from '../utils/api';
 
 export type UserRole = 'USER' | 'ADMIN';
 
@@ -27,9 +28,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const normalizeUser = (userData: any): User => ({
-  ...userData,
-  role: (userData.role?.toUpperCase() as UserRole) || 'USER',
+const normalizeUser = (userData: Partial<User>): User => ({
+  id: String(userData.id || ''),
+  username: String(userData.username || ''),
+  is_public: Boolean(userData.is_public),
+  notes_to_self: String(userData.notes_to_self || ''),
+  map_drawings: (userData.map_drawings as MapDrawing[]) || [],
+  theme_title: String(userData.theme_title || 'Dream Diary'),
+  theme_subtitle: String(userData.theme_subtitle || 'My memories and adventures'),
+  theme_id: String(userData.theme_id || ''),
+  theme: (userData.theme as Theme) || null,
+  role: (String(userData.role || '').toUpperCase() as UserRole) === 'ADMIN' ? 'ADMIN' : 'USER',
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -39,16 +48,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (token) {
-      fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.json())
+      api.get<User>('/api/auth/me')
         .then(data => {
-          if (data.error) {
-            logout();
-          } else {
-            setUser(normalizeUser(data));
-          }
+          setUser(normalizeUser(data));
         })
         .catch(() => logout())
         .finally(() => setIsLoading(false));

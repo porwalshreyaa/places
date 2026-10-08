@@ -4,6 +4,7 @@ import ScrapbookLayout from '../modules/scrapbook/ScrapbookLayout';
 import { Destination, Theme, MapDrawing } from '../types';
 import { Compass } from 'lucide-react';
 import { injectThemeColors, resetThemeColors } from '../utils/themeInjector';
+import { api } from '../utils/api';
 
 export default function PublicPage() {
   const { username } = useParams();
@@ -22,12 +23,15 @@ export default function PublicPage() {
   useEffect(() => {
     const fetchPublicProfile = async () => {
       try {
-        const res = await fetch(`/api/public/user/${username}`);
-        const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to load profile");
-        }
+        const data = await api.get<{
+          destinations: Destination[];
+          notes_to_self: string;
+          theme_title: string;
+          theme_subtitle: string;
+          theme_id: string;
+          theme: Theme | null;
+          map_drawings: MapDrawing[];
+        }>(`/api/public/user/${username}`);
         
         setDestinations(data.destinations || []);
         setNotesToSelf(data.notes_to_self || "");

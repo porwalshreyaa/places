@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { Check, X, Mail, Key, User, Loader2 } from "lucide-react";
 import { Input } from "../../atoms/Input";
 import { Button } from "../../atoms/Button";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth, User as UserType } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../utils/api";
 
 export function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -34,13 +35,8 @@ export function LoginForm() {
 
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/auth/check-availability?username=${encodeURIComponent(username)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setUsernameAvailable(data.available);
-        } else {
-          setUsernameAvailable(true);
-        }
+        const data = await api.get<{ available: boolean }>(`/api/auth/check-availability?username=${encodeURIComponent(username)}`);
+        setUsernameAvailable(data.available);
       } catch (err) {
         console.error("Failed to check username", err);
         setUsernameAvailable(true);
@@ -75,17 +71,7 @@ export function LoginForm() {
       const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
       const body = isLogin ? { username, password } : { username, email, password };
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Something went wrong");
-      }
+      const data = await api.post<{ token: string; user: UserType }>(endpoint, body);
 
       login(data.token, data.user);
       navigate("/admin");

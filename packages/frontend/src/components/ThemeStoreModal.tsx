@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Plus, Palette } from 'lucide-react';
 import { generateThemeShades } from '../utils/themeGenerator';
+import { api } from '../utils/api';
 
 export interface Theme {
   id: string;
@@ -32,8 +33,7 @@ export default function ThemeStoreModal({ isOpen, onClose, currentThemeId, onSel
 
   const fetchThemes = async () => {
     try {
-      const res = await fetch('/api/themes');
-      const data = await res.json();
+      const data = await api.get<Theme[]>('/api/themes');
       setThemes(data);
     } catch (err) {
       console.error('Failed to fetch themes', err);
@@ -50,25 +50,12 @@ export default function ThemeStoreModal({ isOpen, onClose, currentThemeId, onSel
     
     try {
       const colors = generateThemeShades(newBaseColor);
-      const res = await fetch('/api/themes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          name: newThemeName,
-          base_color: newBaseColor,
-          colors
-        })
+      const newTheme = await api.post<Theme>('/api/themes', {
+        name: newThemeName,
+        base_color: newBaseColor,
+        colors
       });
       
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to publish theme');
-      }
-      
-      const newTheme = await res.json();
       await fetchThemes();
       onSelectTheme(newTheme);
       setActiveTab('store');

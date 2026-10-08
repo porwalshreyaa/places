@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ScrapbookLayout from '../modules/scrapbook/ScrapbookLayout';
-import { Destination, MapDrawing } from '../types';
+import { Destination, MapDrawing, Theme } from '../types';
 import { injectThemeColors, resetThemeColors } from '../utils/themeInjector';
+import { api } from '../utils/api';
 
 export default function AdminPage() {
   const { user, token, logout, updateUser, isLoading: authLoading } = useAuth();
@@ -34,10 +35,7 @@ export default function AdminPage() {
 
   const fetchDestinations = async () => {
     try {
-      const res = await fetch("/api/destinations", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await api.get<Destination[]>("/api/destinations");
       if (Array.isArray(data)) {
         setDestinations(data);
       }
@@ -51,14 +49,7 @@ export default function AdminPage() {
   const handleSaveDestinations = async (updatedList: Destination[]) => {
     setDestinations(updatedList);
     try {
-      await fetch("/api/destinations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(updatedList),
-      });
+      await api.post("/api/destinations", updatedList);
     } catch (error) {
       console.error("Failed to persist wishlist destinations:", error);
     }
@@ -67,14 +58,7 @@ export default function AdminPage() {
   const handleUpdateNotes = async (notes: string) => {
     updateUser({ notes_to_self: notes });
     try {
-      await fetch("/api/user-settings", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ notes_to_self: notes }),
-      });
+      await api.put("/api/user-settings", { notes_to_self: notes });
     } catch (error) {
       console.error("Failed to persist notes:", error);
     }
@@ -86,15 +70,7 @@ export default function AdminPage() {
     
     updateUser(updates);
     try {
-      const response = await fetch("/api/user-settings", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(updates),
-      });
-      const data = await response.json();
+      const data = await api.put<{ theme?: Theme }>("/api/user-settings", updates);
       if (data.theme) {
         updateUser({ theme: data.theme });
       }
@@ -106,14 +82,7 @@ export default function AdminPage() {
   const handleUpdateMapDrawings = async (drawings: MapDrawing[]) => {
     updateUser({ map_drawings: drawings });
     try {
-      await fetch("/api/user-settings", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ map_drawings: drawings }),
-      });
+      await api.put("/api/user-settings", { map_drawings: drawings });
     } catch (error) {
       console.error("Failed to persist map drawings:", error);
     }
@@ -123,14 +92,7 @@ export default function AdminPage() {
     const newValue = !user?.is_public;
     updateUser({ is_public: newValue });
     try {
-      await fetch("/api/user-settings", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ is_public: newValue }),
-      });
+      await api.put("/api/user-settings", { is_public: newValue });
     } catch (error) {
       console.error("Failed to persist public setting:", error);
     }
