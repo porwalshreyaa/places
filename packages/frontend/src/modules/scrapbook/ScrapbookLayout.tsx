@@ -119,8 +119,13 @@ export default function ScrapbookLayout({
     setIsCapturing(true);
     
     try {
+      // Ensure web fonts are completely loaded before rasterizing snapshot
+      if (typeof document !== 'undefined' && document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+      
       // Small delay to ensure any UI states (like closing menus) have settled
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
       
       const node = diaryRef.current;
       const width = node.offsetWidth;
@@ -133,6 +138,7 @@ export default function ScrapbookLayout({
       const blob = await toBlob(node, {
         backgroundColor: '#faf8f5',
         pixelRatio: 2,
+        cacheBust: true,
         width,
         height,
         style: {
@@ -328,7 +334,7 @@ export default function ScrapbookLayout({
                 )}
               </div>
             )}
-            <h1 className="font-kalam text-3xl sm:text-4xl md:text-5xl font-extrabold text-stone-800 tracking-tight flex flex-col items-center justify-center gap-1 leading-tight">
+            <h1 className="font-kalam text-3xl sm:text-4xl md:text-5xl font-extrabold text-stone-800 tracking-tight flex flex-col items-center justify-center gap-2 leading-snug">
               {isEditingTheme && isEditable ? (
                 <>
                   <input 
@@ -350,10 +356,10 @@ export default function ScrapbookLayout({
                 </>
               ) : (
                 <>
-                  <span className="text-stone-900 font-kalam font-bold tracking-wide">
+                  <span className="text-stone-900 font-kalam font-bold tracking-wide whitespace-nowrap block">
                     {themeTitle}
                   </span>
-                  <span className="font-kalam text-brand-600 tracking-widest text-2xl sm:text-3xl font-extrabold mt-1">
+                  <span className="font-kalam text-brand-600 tracking-widest text-2xl sm:text-3xl font-extrabold block mt-1">
                     {themeSubtitle}
                   </span>
                 </>
