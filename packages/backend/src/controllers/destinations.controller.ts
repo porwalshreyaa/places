@@ -1,4 +1,4 @@
-import { getErrorMessage } from '../utils/error';
+import { handleServerError } from '../utils/error';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { destinationsCrud } from '../crud/destinations.crud';
@@ -10,9 +10,8 @@ export class DestinationsController {
       
       const userDestinations = await destinationsCrud.findByUserId(req.user.userId);
       res.json(userDestinations);
-    } catch (error: any) {
-      console.error("Error fetching destinations:", error);
-      res.status(500).json({ error: getErrorMessage(error) });
+    } catch (error: unknown) {
+      handleServerError(res, error);
     }
   }
 
@@ -41,9 +40,8 @@ export class DestinationsController {
       await destinationsCrud.bulkDeleteAndInsert(req.user.userId, recordsToInsert);
       
       res.json({ success: true, message: "Destinations saved successfully" });
-    } catch (error: any) {
-      console.error("Error saving destinations:", error);
-      res.status(500).json({ error: getErrorMessage(error) });
+    } catch (error: unknown) {
+      handleServerError(res, error);
     }
   }
 }

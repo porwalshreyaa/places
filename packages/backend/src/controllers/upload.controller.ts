@@ -1,4 +1,4 @@
-import { getErrorMessage } from '../utils/error';
+import { handleServerError } from '../utils/error';
 import { Request, Response } from 'express';
 import { uploadService } from '../services/upload.service';
 
@@ -14,8 +14,7 @@ export class UploadController {
       console.log(`Successfully saved local image file to ${url}`);
       res.json({ success: true, url });
     } catch (err: unknown) {
-      console.error("Error writing uploaded file:", err);
-      res.status(500).json({ success: false, error: getErrorMessage(err) });
+      handleServerError(res, err);
     }
   }
 }

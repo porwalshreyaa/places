@@ -1,4 +1,4 @@
-import { getErrorMessage } from '../utils/error';
+import { handleServerError } from '../utils/error';
 import { Request, Response } from 'express';
 import { themesService } from '../services/themes.service';
 import crypto from 'crypto';
@@ -9,14 +9,14 @@ export class ThemesController {
       const themes = await themesService.getAllThemes();
       res.json(themes);
     } catch (err: unknown) {
-      res.status(500).json({ error: getErrorMessage(err) });
+      handleServerError(res, err);
     }
   }
 
   async createTheme(req: Request, res: Response) {
     try {
       const { name, base_color, colors } = req.body;
-      const creator_id = (req as any).user?.userId;
+      const creator_id = (req as { user?: { userId: string } }).user?.userId;
       
       if (!name || !base_color || !colors) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -36,7 +36,7 @@ export class ThemesController {
 
       res.status(201).json(newTheme);
     } catch (err: unknown) {
-      res.status(500).json({ error: getErrorMessage(err) });
+      handleServerError(res, err);
     }
   }
 }

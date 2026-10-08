@@ -1,4 +1,4 @@
-import { getErrorMessage } from '../utils/error';
+import { handleServerError } from '../utils/error';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { usersCrud } from '../crud/users.crud';
@@ -11,7 +11,7 @@ export class UserSettingsController {
 
       const { notes_to_self, is_public, map_drawings, theme_title, theme_subtitle, theme_id } = req.body;
       
-      const updates: any = {};
+      const updates: Record<string, unknown> = {};
       if (notes_to_self !== undefined) updates.notes_to_self = notes_to_self;
       if (is_public !== undefined) updates.is_public = is_public;
       if (map_drawings !== undefined) updates.map_drawings = map_drawings;
@@ -29,7 +29,7 @@ export class UserSettingsController {
       
       res.json({ success: true, theme: updatedTheme });
     } catch (err: unknown) {
-      res.status(500).json({ error: getErrorMessage(err) });
+      handleServerError(res, err);
     }
   }
 }

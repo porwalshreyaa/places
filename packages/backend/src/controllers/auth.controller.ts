@@ -1,4 +1,4 @@
-import { getErrorMessage } from '../utils/error';
+import { handleServerError } from '../utils/error';
 import { Request, Response } from 'express';
 import { usersCrud } from '../crud/users.crud';
 import { themesCrud } from '../crud/themes.crud';
@@ -31,11 +31,11 @@ export class AuthController {
         password: hashedPassword,
       });
 
-      const token = authService.generateToken(newUser.id, newUser.username, (newUser as any).role || 'USER');
+      const token = authService.generateToken(newUser.id, newUser.username, (newUser as { role?: string }).role || 'USER');
       
-      res.json({ token, user: { id: newUser.id, username: newUser.username, role: (newUser as any).role || 'USER' } });
+      res.json({ token, user: { id: newUser.id, username: newUser.username, role: (newUser as { role?: string }).role || 'USER' } });
     } catch (err: unknown) {
-      res.status(500).json({ error: getErrorMessage(err) });
+      handleServerError(res, err);
     }
   }
 
@@ -53,14 +53,14 @@ export class AuthController {
         return res.status(400).json({ error: 'Invalid credentials' });
       }
 
-      const token = authService.generateToken(user.id, user.username, (user as any).role || 'USER');
+      const token = authService.generateToken(user.id, user.username, (user as { role?: string }).role || 'USER');
       
       res.json({ 
         token, 
-        user: { id: user.id, username: user.username, role: (user as any).role || 'USER', is_public: user.is_public } 
+        user: { id: user.id, username: user.username, role: (user as { role?: string }).role || 'USER', is_public: user.is_public } 
       });
     } catch (err: unknown) {
-      res.status(500).json({ error: getErrorMessage(err) });
+      handleServerError(res, err);
     }
   }
 
@@ -72,26 +72,27 @@ export class AuthController {
       if (!user) return res.status(404).json({ error: 'User not found' });
       
       let theme = null;
-      if ((user as any).theme_id) {
-        theme = await themesCrud.findById((user as any).theme_id);
+      if ((user as { theme_id?: string }).theme_id) {
+        theme = await themesCrud.findById((user as { theme_id?: string }).theme_id!);
       }
 
       res.json({ 
         id: user.id, 
         username: user.username, 
-        role: (user as any).role || 'USER',
+        role: (user as { role?: string }).role || 'USER',
         is_public: user.is_public,
         notes_to_self: user.notes_to_self,
         map_drawings: user.map_drawings,
         theme_title: user.theme_title,
         theme_subtitle: user.theme_subtitle,
-        theme_id: (user as any).theme_id,
+        theme_id: (user as { theme_id?: string }).theme_id,
         theme: theme || null
       });
     } catch (err: unknown) {
-      res.status(500).json({ error: getErrorMessage(err) });
+      handleServerError(res, err);
     }
   }
+
   async checkAvailability(req: Request, res: Response) {
     try {
       const { username, email } = req.query;
@@ -108,7 +109,7 @@ export class AuthController {
 
       res.status(400).json({ error: 'Must provide username or email to check' });
     } catch (err: unknown) {
-      res.status(500).json({ error: getErrorMessage(err) });
+      handleServerError(res, err);
     }
   }
 }

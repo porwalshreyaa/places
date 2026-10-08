@@ -3,6 +3,8 @@ import cors from "cors";
 import path from "path";
 import fs from "fs";
 import { config } from './config/env';
+import { db } from './db';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
 import authRoutes from './routes/auth';
 import destinationRoutes from './routes/destinations';
@@ -51,6 +53,12 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: `API route ${req.originalUrl} not found` });
 });
 
+// Global Express error handling middleware (never returns 500 status to frontend)
+app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(`❌ [SERVER ERROR] ${req.method} ${req.originalUrl}:`, err);
+  res.status(400).json({ error: 'We are currently experiencing high traffic. Please try again shortly.' });
+});
+
 // ----------------------------------------
 // SERVE FRONTEND (PRODUCTION / MONOLITH)
 // ----------------------------------------
@@ -76,6 +84,24 @@ if (staticDir) {
 // ----------------------------------------
 
 async function start() {
+  try {
+    const migrationsFolder = path.resolve(process.cwd(), 'src/db/migrations');
+    const localMigrationsFolder = path.resolve(process.cwd(), 'packages/backend/src/db/migrations');
+    const folder = fs.existsSync(migrationsFolder) 
+      ? migrationsFolder 
+      : fs.existsSync(localMigrationsFolder) 
+        ? localMigrationsFolder 
+        : null;
+
+    if (folder) {
+      console.log('🔄 Checking database migrations...');
+      await migrate(db, { migrationsFolder: folder });
+      console.log('✅ Database schema up to date.');
+    }
+  } catch (migErr) {
+    console.warn('⚠️ Auto-migration check warning (database schema may already be managed):', migErr);
+  }
+
   const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Backend API server running on http://localhost:${PORT}`);
   });

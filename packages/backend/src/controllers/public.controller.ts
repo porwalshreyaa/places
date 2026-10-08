@@ -1,4 +1,4 @@
-import { getErrorMessage } from '../utils/error';
+import { handleServerError } from '../utils/error';
 import { Request, Response } from 'express';
 import { usersCrud } from '../crud/users.crud';
 import { destinationsCrud } from '../crud/destinations.crud';
@@ -22,8 +22,8 @@ export class PublicController {
       const userDestinations = await destinationsCrud.findByUserId(user.id);
       
       let theme = null;
-      if ((user as any).theme_id) {
-        theme = await themesCrud.findById((user as any).theme_id);
+      if ((user as { theme_id?: string }).theme_id) {
+        theme = await themesCrud.findById((user as { theme_id?: string }).theme_id!);
       }
 
       res.json({
@@ -32,12 +32,12 @@ export class PublicController {
         map_drawings: user.map_drawings,
         theme_title: user.theme_title,
         theme_subtitle: user.theme_subtitle,
-        theme_id: (user as any).theme_id,
+        theme_id: (user as { theme_id?: string }).theme_id,
         theme: theme || null,
         destinations: userDestinations,
       });
     } catch (err: unknown) {
-      res.status(500).json({ error: getErrorMessage(err) });
+      handleServerError(res, err);
     }
   }
 }
