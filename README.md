@@ -1,7 +1,7 @@
-# 🌍 Ghoomi — Interactive Travel Scrapbook & Map Diary
+# 🌍 Places — Interactive Travel Scrapbook & Map
 
 > **"Capture memories where they happened."**  
-> *Ghoomi* (from the Hindi *Ghoomna*, meaning to wander and explore) is a full-stack digital travel scrapbook and interactive map diary. It lets travelers pin destinations, draw hand-crafted doodles and routes on a interactive map canvas, record travel memories, customize visual themes, and share their journey with the world via a personalized public link.
+> *Places* is a full-stack digital travel scrapbook and interactive map application. It lets travelers pin destinations, draw hand-crafted doodles and routes on an interactive map canvas, record travel memories, customize visual themes, and share their journey with the world via a personalized public link.
 
 ---
 

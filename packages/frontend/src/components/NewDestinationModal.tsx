@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { X, MapPin, Image as ImageIcon, Sparkles, AlertCircle, UploadCloud } from "lucide-react";
 import { Destination } from "../types";
 import { api } from "../utils/api";
+import { sanitizeCoordinate } from "../utils/coordinates";
 
 interface NewDestinationModalProps {
   initialCoords: { lat: number; lng: number } | null;
@@ -53,8 +54,12 @@ export default function NewDestinationModal({
   const [country, setCountry] = useState("India");
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
-  const [coordLat, setCoordLat] = useState(initialCoords?.lat ?? 20.59);
-  const [coordLng, setCoordLng] = useState(initialCoords?.lng ?? 78.96);
+  const [coordLat, setCoordLat] = useState<number | string>(
+    initialCoords ? sanitizeCoordinate(initialCoords.lat, false, 4) : 20.59
+  );
+  const [coordLng, setCoordLng] = useState<number | string>(
+    initialCoords ? sanitizeCoordinate(initialCoords.lng, true, 4) : 78.96
+  );
   
   // Choose photo
   const [image, setImage] = useState(PRESET_IMAGES[0].url);
@@ -131,12 +136,15 @@ export default function NewDestinationModal({
       return;
     }
 
+    const parsedLat = sanitizeCoordinate(coordLat, false, 4);
+    const parsedLng = sanitizeCoordinate(coordLng, true, 4);
+
     onSave({
       name: name.trim(),
       country: country.trim(),
       description: description.trim() || "A dreamy corner of the world waiting for our wandering steps.",
       notes: notes.trim() || "Plan to wander under pastel skies, take loads of snapshots, and collect postcards.",
-      coordinates: { lat: parseFloat(coordLat.toString()), lng: parseFloat(coordLng.toString()) },
+      coordinates: { lat: parsedLat, lng: parsedLng },
       image: image,
       checklist: [
         { text: `Explore the alleys of ${name.trim()}`, checked: false },
@@ -268,11 +276,12 @@ export default function NewDestinationModal({
                     <label className="text-[9px] font-mono text-stone-400 block mb-1">Latitude</label>
                     <input
                       type="number"
-                      step="0.0001"
+                      step="any"
                       min="-90"
                       max="90"
                       value={coordLat}
-                      onChange={(e) => setCoordLat(parseFloat(e.target.value))}
+                      onChange={(e) => setCoordLat(e.target.value)}
+                      onBlur={() => setCoordLat(sanitizeCoordinate(coordLat, false, 4))}
                       className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-white border border-stone-200 font-serif focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-400"
                     />
                   </div>
@@ -280,11 +289,12 @@ export default function NewDestinationModal({
                     <label className="text-[9px] font-mono text-stone-400 block mb-1">Longitude</label>
                     <input
                       type="number"
-                      step="0.0001"
+                      step="any"
                       min="-180"
                       max="180"
                       value={coordLng}
-                      onChange={(e) => setCoordLng(parseFloat(e.target.value))}
+                      onChange={(e) => setCoordLng(e.target.value)}
+                      onBlur={() => setCoordLng(sanitizeCoordinate(coordLng, true, 4))}
                       className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-white border border-stone-200 font-serif focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-400"
                     />
                   </div>

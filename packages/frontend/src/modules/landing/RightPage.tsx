@@ -183,17 +183,12 @@ export function RightPage() {
           />
         </div>
 
-        {/* 🌸 ABSOLUTE BOTTOM RIGHT TITLE HEADER ("Voyage to my dreamland") */}
+        {/* 🌸 ABSOLUTE BOTTOM RIGHT TITLE HEADER ("Places") */}
         <div className="flex flex-col items-end pr-2">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-stone-800 font-caveat leading-tight flex items-center gap-x-2">
             <span className="text-rose-600 font-black relative inline-block transform -rotate-2 hover:rotate-0 transition-transform">
-              Voyage
+              Places
               <span className="absolute left-0 bottom-0.5 w-full h-[3px] bg-amber-300/80 rounded-full pointer-events-none" />
-            </span>
-            <span className="text-stone-500 font-normal lowercase text-xl">to my</span>
-            <span className="text-teal-600 font-black relative inline-block transform rotate-1 hover:rotate-0 transition-transform">
-              dreamland
-              <span className="absolute left-0 bottom-0.5 w-full h-[3px] bg-rose-300/80 rounded-full pointer-events-none" />
             </span>
             <Sparkles className="w-5 h-5 text-amber-500 animate-pulse inline-block" />
           </h1>

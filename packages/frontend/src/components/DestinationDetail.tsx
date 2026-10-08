@@ -5,6 +5,7 @@ import {
   RotateCw, ArrowRight, RotateCcw, AlertCircle, HelpCircle, CornerDownRight, CheckCircle
 } from "lucide-react";
 import { Destination, ScrapSticker, ChecklistItem } from "../types";
+import { formatCoordinatesDisplay } from "../utils/coordinates";
 
 
 interface DestinationDetailProps {
@@ -443,7 +444,7 @@ export default function DestinationDetail({
 
               {/* Grid outline lines on the frame background */}
               <div className="absolute bottom-1 right-3 text-[9px] font-mono text-stone-400 select-none">
-                📍 {destination.coordinates.lng}N, {destination.coordinates.lat}E
+                {formatCoordinatesDisplay(destination.coordinates?.lat, destination.coordinates?.lng, 4)}
               </div>
             </div>
 

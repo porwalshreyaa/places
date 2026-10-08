@@ -16,7 +16,7 @@ export default function SharePreviewModal({ isOpen, onClose, imageUrl, shareUrl 
 
   const handleCopy = async () => {
     try {
-      const textToCopy = `Check out my wanderlust diary! 🌍✨\n${shareUrl}`;
+      const textToCopy = `Check out my Places map! 🌍✨\n${shareUrl}`;
       const response = await fetch(imageUrl);
       const blob = await response.blob();
 
@@ -33,7 +33,7 @@ export default function SharePreviewModal({ isOpen, onClose, imageUrl, shareUrl 
       console.error('Failed to copy text and image: ', err);
       // Fallback to just text if image copying fails (e.g., due to permissions or browser limitations)
       try {
-        await navigator.clipboard.writeText(`Check out my wanderlust diary! 🌍✨\n${shareUrl}`);
+        await navigator.clipboard.writeText(`Check out my Places map! 🌍✨\n${shareUrl}`);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (fallbackErr) {
@@ -44,7 +44,7 @@ export default function SharePreviewModal({ isOpen, onClose, imageUrl, shareUrl 
 
   const handleDownload = () => {
     const link = document.createElement('a');
-    link.download = 'dream-diary.png';
+    link.download = 'places.png';
     link.href = imageUrl;
     link.click();
   };

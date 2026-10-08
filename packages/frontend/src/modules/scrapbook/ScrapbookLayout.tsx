@@ -72,7 +72,7 @@ export default function ScrapbookLayout({
   
   const [copiedLink, setCopiedLink] = useState(false);
   const [isEditingTheme, setIsEditingTheme] = useState(false);
-  const [localTitle, setLocalTitle] = useState(themeTitle || 'Dream Diary');
+  const [localTitle, setLocalTitle] = useState(themeTitle || 'Places');
   const [localSubtitle, setLocalSubtitle] = useState(themeSubtitle || 'My memories and adventures');
   const [localThemeId, setLocalThemeId] = useState(themeId || 'baby_girl');
 
@@ -151,11 +151,11 @@ export default function ScrapbookLayout({
       
       if (!blob) throw new Error('Could not generate image');
       
-      const file = new File([blob], 'dream-diary.png', { type: 'image/png' });
+      const file = new File([blob], 'places.png', { type: 'image/png' });
       const shareUrl = `${window.location.origin}/share/${username}`;
       const shareData = {
-        title: `${username}'s Dream Diary`,
-        text: `Check out my wanderlust diary! 🌍✨`,
+        title: `${username}'s Places`,
+        text: `Check out my Places map! 🌍✨`,
         url: shareUrl,
         files: [file]
       };
@@ -303,7 +303,7 @@ export default function ScrapbookLayout({
 
         <div className="relative py-12 px-6 rounded-3xl bg-[#fffdf9] border border-[#e4dfd2] shadow-sm overflow-hidden text-center">
           <div className="absolute top-2 left-1/2 transform -translate-x-1/2 rotate-1 w-[26rem] max-w-[90%] h-8 bg-brand-200/80 border border-brand-300/40 text-[11px] font-kalam font-bold text-brand-700 tracking-wider flex items-center justify-center shadow-sm px-4 whitespace-nowrap">
-            🎀 {username}'s wanderlust diary 🎀
+            🎀 {username}'s Places 🎀
           </div>
 
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="relative">
@@ -367,7 +367,7 @@ export default function ScrapbookLayout({
             </h1>
             <div className="w-48 h-[1px] bg-stone-300 mx-auto my-4" />
             <p className="font-mono text-[10px] sm:text-xs text-stone-400 tracking-widest uppercase font-bold">
-              DREAM DESTINATIONS • {new Date().getFullYear()} EDITION
+              PLACES • {new Date().getFullYear()} EDITION
             </p>
           </motion.div>
         </div>

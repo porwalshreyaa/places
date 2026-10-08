@@ -2,6 +2,7 @@ import { handleServerError } from '../utils/error';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { destinationsCrud } from '../crud/destinations.crud';
+import { sanitizeDestinationRecord } from '../utils/sanitizer';
 
 export class DestinationsController {
   async getDestinations(req: AuthRequest, res: Response) {
@@ -24,18 +25,7 @@ export class DestinationsController {
         return res.status(400).json({ error: "Invalid data format" });
       }
 
-      const recordsToInsert = newDestinations.map(d => ({
-        id: d.id,
-        user_id: req.user!.userId,
-        name: d.name,
-        country: d.country,
-        coordinates: d.coordinates,
-        description: d.description,
-        image: d.image,
-        notes: d.notes,
-        checklist: d.checklist,
-        stickers: d.stickers,
-      }));
+      const recordsToInsert = newDestinations.map(d => sanitizeDestinationRecord(d, req.user!.userId));
 
       await destinationsCrud.bulkDeleteAndInsert(req.user.userId, recordsToInsert);
       

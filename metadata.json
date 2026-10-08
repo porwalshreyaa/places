@@ -1,6 +1,6 @@
 {
-  "name": "ghoomi ghoomi chalnaaaaaaaaa aaaaaaaaaaaanannn **sobs**",
-  "description": "An aesthetic travel scrapbook diary and dream bucket list tracker featuring iconic spiritual places in India.",
+  "name": "Places",
+  "description": "An aesthetic travel scrapbook and interactive map application.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

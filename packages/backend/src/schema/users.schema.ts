@@ -11,7 +11,7 @@ export const users = pgTable('users', {
   is_public: boolean('is_public').default(false).notNull(),
   notes_to_self: text('notes_to_self').default(''),
   map_drawings: jsonb('map_drawings').default('[]'),
-  theme_title: text('theme_title').default('Dream Diary'),
+  theme_title: text('theme_title').default('Places'),
   theme_subtitle: text('theme_subtitle').default('My memories and adventures'),
   theme_id: uuid('theme_id'),
 });

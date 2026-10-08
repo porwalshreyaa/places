@@ -18,12 +18,22 @@ export const userSettingsSchema = z.object({
   theme_id: z.string().uuid("Invalid theme ID").optional(),
 });
 
+const coordVal = (isLng = false) =>
+  z.preprocess((val) => {
+    let num = typeof val === 'number' ? val : parseFloat(String(val));
+    if (isNaN(num) || !isFinite(num)) num = isLng ? 78.96 : 20.59;
+    const min = isLng ? -180 : -90;
+    const max = isLng ? 180 : 90;
+    num = Math.max(min, Math.min(max, num));
+    return Math.round(num * 10000) / 10000;
+  }, z.number());
+
 export const destinationSchema = z.object({
   title: z.string().min(1, "Title is required"),
   country: z.string().min(1, "Country is required"),
   description: z.string().optional(),
-  lat: z.number(),
-  lng: z.number(),
+  lat: coordVal(false),
+  lng: coordVal(true),
   photos: z.array(z.string()).optional(),
   is_completed: z.boolean().optional()
 });

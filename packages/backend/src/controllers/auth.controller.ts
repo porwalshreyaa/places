@@ -5,29 +5,35 @@ import { themesCrud } from '../crud/themes.crud';
 import { authService } from '../services/auth.service';
 import { AuthRequest } from '../middleware/auth';
 
+import { sanitizeUsername, sanitizeEmail } from '../utils/sanitizer';
+
 export class AuthController {
   async register(req: Request, res: Response) {
     try {
       const { username, email, password } = req.body;
-      if (!username || !email || !password) {
-        return res.status(400).json({ error: 'Username, email, and password required' });
+      const cleanUsername = sanitizeUsername(username);
+      const cleanEmail = sanitizeEmail(email);
+      const cleanPassword = String(password || '').trim();
+
+      if (!cleanUsername || !cleanEmail || !cleanPassword) {
+        return res.status(400).json({ error: 'Valid username, email, and password required' });
       }
 
-      const existingUser = await usersCrud.findByUsername(username);
+      const existingUser = await usersCrud.findByUsername(cleanUsername);
       if (existingUser) {
         return res.status(400).json({ error: 'Username already taken' });
       }
 
-      const existingEmail = await usersCrud.findByEmail(email);
+      const existingEmail = await usersCrud.findByEmail(cleanEmail);
       if (existingEmail) {
         return res.status(400).json({ error: 'Email already registered' });
       }
 
-      const hashedPassword = await authService.hashPassword(password);
+      const hashedPassword = await authService.hashPassword(cleanPassword);
       
       const newUser = await usersCrud.create({
-        username,
-        email,
+        username: cleanUsername,
+        email: cleanEmail,
         password: hashedPassword,
       });
 
@@ -42,13 +48,15 @@ export class AuthController {
   async login(req: Request, res: Response) {
     try {
       const { username, password } = req.body;
+      const cleanUsername = sanitizeUsername(username);
+      const cleanPassword = String(password || '').trim();
       
-      const user = await usersCrud.findByUsername(username);
+      const user = await usersCrud.findByUsername(cleanUsername);
       if (!user) {
         return res.status(400).json({ error: 'Invalid credentials' });
       }
 
-      const isMatch = await authService.comparePassword(password, user.password);
+      const isMatch = await authService.comparePassword(cleanPassword, user.password);
       if (!isMatch) {
         return res.status(400).json({ error: 'Invalid credentials' });
       }
@@ -98,12 +106,14 @@ export class AuthController {
       const { username, email } = req.query;
       
       if (username) {
-        const existingUser = await usersCrud.findByUsername(username as string);
+        const cleanUsername = sanitizeUsername(username);
+        const existingUser = await usersCrud.findByUsername(cleanUsername);
         return res.json({ available: !existingUser });
       }
       
       if (email) {
-        const existingEmail = await usersCrud.findByEmail(email as string);
+        const cleanEmail = sanitizeEmail(email);
+        const existingEmail = await usersCrud.findByEmail(cleanEmail);
         return res.json({ available: !existingEmail });
       }
 

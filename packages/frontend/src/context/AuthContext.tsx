@@ -34,7 +34,7 @@ const normalizeUser = (userData: Partial<User>): User => ({
   is_public: Boolean(userData.is_public),
   notes_to_self: String(userData.notes_to_self || ''),
   map_drawings: (userData.map_drawings as MapDrawing[]) || [],
-  theme_title: String(userData.theme_title || 'Dream Diary'),
+  theme_title: String(userData.theme_title || 'Places'),
   theme_subtitle: String(userData.theme_subtitle || 'My memories and adventures'),
   theme_id: String(userData.theme_id || ''),
   theme: (userData.theme as Theme) || null,

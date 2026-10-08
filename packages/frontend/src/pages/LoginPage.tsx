@@ -15,7 +15,7 @@ export default function LoginPage() {
             <Compass className="w-5 h-5" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-stone-900">
-            Dream Diary
+            Places
           </h1>
           <p className="text-xs text-stone-500 tracking-wide">
             Your clean, modern travel scrapbook
