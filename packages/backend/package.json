@@ -11,6 +11,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@ghoomi/shared": "*",
     "@google/genai": "^2.4.0",
     "@types/cors": "^2.8.19",
     "bcryptjs": "^3.0.3",

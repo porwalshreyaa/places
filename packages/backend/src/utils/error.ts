@@ -1,11 +1,9 @@
 import { Response } from 'express';
+import { CustomError } from './errors';
 
 const DEFAULT_USER_MESSAGE = 'We are currently experiencing high traffic. Please try again shortly.';
 
-/**
- * Standard error shape across server error logging and handling.
- */
-export type AppError = Error | { message?: string; stack?: string; code?: string | number } | string | null | undefined;
+export type AppError = Error | CustomError | { message?: string; stack?: string; code?: string | number } | string | null | undefined;
 
 export function logError(error: AppError, context?: string): void {
   const timestamp = new Date().toISOString();
@@ -18,10 +16,6 @@ export function getErrorMessage(error: AppError): string {
   return DEFAULT_USER_MESSAGE;
 }
 
-/**
- * Handles internal backend errors without exposing 500 status or internal SQL/stack traces to the frontend.
- * Logs the exact error trace on backend terminals, and returns HTTP 400 with a friendly traffic message.
- */
 export function handleServerError(
   res: Response,
   error: AppError,
@@ -29,5 +23,15 @@ export function handleServerError(
 ): Response {
   const context = `${res.req?.method || ''} ${res.req?.originalUrl || ''}`.trim();
   logError(error, context);
+
+  if (error instanceof CustomError) {
+    return res.status(error.statusCode).json({
+      error: error.message,
+      ...(error.details ? { details: error.details } : {})
+    });
+  }
+
   return res.status(400).json({ error: userFacingMessage });
 }
+
+export * from './errors';

@@ -1,59 +1,38 @@
-import { handleServerError, AppError } from '../utils/error';
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { destinationsCrud } from '../crud/destinations.crud';
-import { sanitizeDestinationRecord } from '../utils/sanitizer';
-import { uploadService } from '../services/upload.service';
+import { destinationsService } from '../services/destinations.service';
 import { rawDestinationsListSchema } from '../validators';
+import { BadRequestError, UnauthorizedError } from '../utils/errors';
 
 export class DestinationsController {
-  async getDestinations(req: AuthRequest, res: Response) {
+  async getDestinations(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-      
-      const userDestinations = await destinationsCrud.findByUserId(req.user.userId);
+      if (!req.user) {
+        throw new UnauthorizedError('Unauthorized');
+      }
+
+      const userDestinations = await destinationsService.getUserDestinations(req.user.userId);
       res.json(userDestinations);
-    } catch (error: AppError) {
-      handleServerError(res, error);
+    } catch (error) {
+      next(error);
     }
   }
 
-  async saveDestinations(req: AuthRequest, res: Response) {
-    let newCatboxUrls: string[] = [];
+  async saveDestinations(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) {
+        throw new UnauthorizedError('Unauthorized');
+      }
 
-      // Validate incoming destination array payload using Zod schema
       const parseResult = rawDestinationsListSchema.safeParse(req.body);
       if (!parseResult.success) {
-        return res.status(400).json({ error: 'Invalid destinations data format', details: parseResult.error.errors });
+        throw new BadRequestError('Invalid destinations data format', parseResult.error.errors);
       }
 
-      const newDestinations = parseResult.data;
-
-      // Fetch current user destinations to identify newly added images
-      const existingDestinations = await destinationsCrud.findByUserId(req.user.userId);
-      const existingImageUrls = new Set(existingDestinations.map(d => d.image).filter(Boolean));
-
-      const recordsToInsert = newDestinations.map((d, index) => sanitizeDestinationRecord(d, req.user!.userId, index));
-
-      // Find any new Catbox image URLs introduced in this request
-      newCatboxUrls = recordsToInsert
-        .map(d => d.image)
-        .filter((img): img is string => Boolean(img && img.includes('catbox.moe') && !existingImageUrls.has(img)));
-
-      await destinationsCrud.bulkDeleteAndInsert(req.user.userId, recordsToInsert);
-      
-      res.json({ success: true, message: "Destinations saved successfully" });
-    } catch (error: AppError) {
-      // ROLLBACK CLEANUP: If DB save failed, clean up newly uploaded Catbox images
-      if (newCatboxUrls.length > 0) {
-        console.warn(`[Rollback Cleanup] Database write failed. Deleting ${newCatboxUrls.length} newly uploaded Catbox image(s)...`);
-        uploadService.deleteFromCatbox(newCatboxUrls).catch(err => {
-          console.error('[Rollback Cleanup] Failed to delete Catbox images on rollback:', err);
-        });
-      }
-      handleServerError(res, error);
+      const result = await destinationsService.saveUserDestinations(req.user.userId, parseResult.data);
+      res.json(result);
+    } catch (error) {
+      next(error);
     }
   }
 }

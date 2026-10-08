@@ -5,7 +5,7 @@ import fs from "fs";
 import { config } from './config/env';
 import { db } from './db';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import { AppError } from './utils/error';
+import { errorMiddleware } from './middleware/errorMiddleware';
 
 import authRoutes from './routes/auth';
 import destinationRoutes from './routes/destinations';
@@ -49,21 +49,18 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/themes', themeRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Health check endpoint for Render / cloud deployment platforms
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Fallback for unmatched API routes
 app.use('/api/*', (req, res) => {
   res.status(404).json({ error: `API route ${req.originalUrl} not found` });
 });
 
-// Global Express error handling middleware (never returns 500 status to frontend)
-app.use((err: AppError, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(`❌ [SERVER ERROR] ${req.method} ${req.originalUrl}:`, err);
-  res.status(400).json({ error: 'We are currently experiencing high traffic. Please try again shortly.' });
-});
-
-// Health check endpoint for Render / cloud deployment platforms
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+// Centralized Express error handling middleware
+app.use(errorMiddleware);
 
 // ----------------------------------------
 // SERVE FRONTEND (PRODUCTION / MONOLITH)
