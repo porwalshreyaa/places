@@ -1,3 +1,15 @@
+export interface ApiErrorDetail {
+  message?: string;
+  path?: string[];
+}
+
+export interface ApiErrorResponse {
+  error?: string;
+  details?: ApiErrorDetail[];
+}
+
+export type RequestBody = Record<string, object | string | number | boolean | null | undefined> | Array<object | string | number | boolean> | FormData;
+
 export class ApiClient {
   private baseUrl: string;
 
@@ -29,19 +41,19 @@ export class ApiClient {
     });
 
     const text = await response.text();
-    let data: unknown = null;
+    let data: T | ApiErrorResponse | null = null;
 
     if (text && text.trim().length > 0) {
       try {
-        data = JSON.parse(text);
+        data = JSON.parse(text) as T | ApiErrorResponse;
       } catch {
         throw new Error(`Server returned invalid response (Status ${response.status})`);
       }
     }
 
     if (!response.ok) {
-      const errorObj = typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
-      const details = Array.isArray(errorObj.details) ? (errorObj.details as Array<Record<string, unknown>>) : [];
+      const errorObj = (typeof data === 'object' && data !== null ? data : {}) as ApiErrorResponse;
+      const details = Array.isArray(errorObj.details) ? errorObj.details : [];
       const errorMsg = 
         typeof errorObj.error === 'string' 
           ? errorObj.error 
@@ -62,7 +74,7 @@ export class ApiClient {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
 
-  public post<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
+  public post<T>(endpoint: string, body?: RequestBody, options?: RequestInit): Promise<T> {
     const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
@@ -71,7 +83,7 @@ export class ApiClient {
     });
   }
 
-  public put<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
+  public put<T>(endpoint: string, body?: RequestBody, options?: RequestInit): Promise<T> {
     const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,

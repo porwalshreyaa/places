@@ -42,7 +42,7 @@ export default function PublicPage() {
         setThemeId(data.theme_id);
         setTheme(data.theme);
         setMapDrawings(data.map_drawings || []);
-      } catch (err: unknown) {
+      } catch (err) {
         if (err instanceof Error) setError(err.message);
         else setError(String(err));
       } finally {

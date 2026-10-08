@@ -2,13 +2,18 @@ import { Response } from 'express';
 
 const DEFAULT_USER_MESSAGE = 'We are currently experiencing high traffic. Please try again shortly.';
 
-export function logError(error: unknown, context?: string): void {
+/**
+ * Standard error shape across server error logging and handling.
+ */
+export type AppError = Error | { message?: string; stack?: string; code?: string | number } | string | null | undefined;
+
+export function logError(error: AppError, context?: string): void {
   const timestamp = new Date().toISOString();
   const label = context ? `[SERVER ERROR - ${context}]` : '[SERVER ERROR]';
   console.error(`❌ ${timestamp} ${label}:`, error);
 }
 
-export function getErrorMessage(error: unknown): string {
+export function getErrorMessage(error: AppError): string {
   logError(error);
   return DEFAULT_USER_MESSAGE;
 }
@@ -19,7 +24,7 @@ export function getErrorMessage(error: unknown): string {
  */
 export function handleServerError(
   res: Response,
-  error: unknown,
+  error: AppError,
   userFacingMessage: string = DEFAULT_USER_MESSAGE
 ): Response {
   const context = `${res.req?.method || ''} ${res.req?.originalUrl || ''}`.trim();

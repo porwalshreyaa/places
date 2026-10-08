@@ -146,6 +146,47 @@ npm run build -w @ghoomi/backend
 
 ---
 
+## 📐 Type System & Data Schemas
+
+Places enforces strict TypeScript typing across all packages with **zero `any` or `unknown` type usages**. All payloads, domain records, and sanitizer inputs are governed by explicit interfaces:
+
+### 1. Raw Destination Input (`RawDestinationInput`)
+Complex incoming payload object (`d`) representing destination details sent from client requests or external API calls before database sanitization:
+
+```typescript
+/**
+ * Complete raw destination record payload ("d") sent from client requests.
+ */
+export interface RawDestinationInput {
+  id?: string | null;                  // Unique string identifier or null for auto-generated IDs
+  name?: string | null;                // Name of destination
+  country?: string | null;             // Country name
+  coordinates?: RawCoordinatesInput | null; // Geographic coordinates
+  description?: string | null;         // Brief tagline or summary
+  image?: string | null;               // Image URL or base64 data URI
+  notes?: string | null;               // Detailed scrapbook travel notes
+  checklist?: RawChecklistItemInput[] | null; // Array of bucket list checklist items
+  stickers?: RawStickerInput[] | null; // Array of draggable scrapbook stickers
+}
+```
+
+### 2. Nested Sub-Payload Interfaces
+- **`RawCoordinatesInput`**: `{ lat?: number | string | null; lng?: number | string | null; }`
+- **`RawChecklistItemInput`**: `{ text?: string | null; checked?: boolean | null; }`
+- **`RawStickerInput`**: `{ id?: string; type?: string; emoji?: string; label?: string; x?: number; y?: number; rotate?: number; scale?: number; }`
+- **`RawMapDrawingInput`**: `{ id?: string; type?: string; color?: string; strokeWidth?: number; points?: Array<{ lat?: number; lng?: number }>; }`
+
+### 4. Zod Schema Validation Layer
+All API request bodies, queries, and parameters are validated using Zod schemas in [validators/index.ts](file:///home/shreya/Desktop/places/packages/backend/src/validators/index.ts):
+- **`rawDestinationsListSchema`**: Validates destination array payloads in `POST /api/destinations`.
+- **`userSettingsSchema`**: Validates user preferences, theme titles, and map drawings in `PUT /api/user-settings`.
+- **`registerSchema` & `authSchema`**: Validates username, email, and password during auth requests in `POST /api/auth/register` and `POST /api/auth/login`.
+- **`uploadPayloadSchema`**: Validates base64 image string & filename in `POST /api/upload`.
+- **`createThemeSchema`**: Validates theme name, base color, and hex color map in `POST /api/themes`.
+- **`checkAvailabilityQuerySchema`**: Validates query parameters for username/email availability checks in `GET /api/auth/check`.
+
+---
+
 ## 📜 License
 
 Distributed under the MIT License. See `LICENSE` for more details.

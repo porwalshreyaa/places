@@ -1,4 +1,4 @@
-import { handleServerError } from '../utils/error';
+import { handleServerError, AppError } from '../utils/error';
 import { Request, Response } from 'express';
 import { usersCrud } from '../crud/users.crud';
 import { destinationsCrud } from '../crud/destinations.crud';
@@ -36,7 +36,7 @@ export class PublicController {
         theme: theme || null,
         destinations: userDestinations,
       });
-    } catch (err: unknown) {
+    } catch (err: AppError) {
       handleServerError(res, err);
     }
   }

@@ -60,7 +60,7 @@ export default function ThemeStoreModal({ isOpen, onClose, currentThemeId, onSel
       onSelectTheme(newTheme);
       setActiveTab('store');
       setNewThemeName('');
-    } catch (err: unknown) {
+    } catch (err) {
       if (err instanceof Error) setError(err.message);
       else setError(String(err));
     } finally {

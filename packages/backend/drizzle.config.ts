@@ -10,6 +10,6 @@ export default {
   dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL as string,
-    ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false } as any,
+    ssl: process.env.DATABASE_URL?.includes('localhost') ? false : ({ rejectUnauthorized: false } as boolean | { rejectUnauthorized: boolean }),
   },
 } satisfies Config;

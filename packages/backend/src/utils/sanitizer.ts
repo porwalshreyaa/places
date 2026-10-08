@@ -5,9 +5,74 @@
  */
 
 /**
+ * Raw coordinates payload input for latitude/longitude sanitization.
+ */
+export interface RawCoordinatesInput {
+  lat?: number | string | null;
+  lng?: number | string | null;
+}
+
+/**
+ * Raw checklist item input for destination bucket list sanitization.
+ */
+export interface RawChecklistItemInput {
+  text?: string | null;
+  checked?: boolean | null;
+}
+
+/**
+ * Raw sticker placement input for destination scrapbook canvas sanitization.
+ */
+export interface RawStickerInput {
+  id?: string | null;
+  type?: string | null;
+  emoji?: string | null;
+  label?: string | null;
+  x?: number | null;
+  y?: number | null;
+  rotate?: number | null;
+  scale?: number | null;
+}
+
+/**
+ * Point coordinate structure for interactive map drawings.
+ */
+export interface RawDrawingPointInput {
+  lat?: number | null;
+  lng?: number | null;
+}
+
+/**
+ * Raw map drawing path input for interactive user sketch layers.
+ */
+export interface RawMapDrawingInput {
+  id?: string | null;
+  type?: string | null;
+  color?: string | null;
+  strokeWidth?: number | null;
+  points?: RawDrawingPointInput[] | null;
+}
+
+/**
+ * Complete raw destination record payload ("d") sent from client requests or external sources.
+ * Contains optional fields for name, country, coordinates, description, photo URL, scrapbook notes, checklist, and stickers.
+ */
+export interface RawDestinationInput {
+  id?: string | null;
+  name?: string | null;
+  country?: string | null;
+  coordinates?: RawCoordinatesInput | null;
+  description?: string | null;
+  image?: string | null;
+  notes?: string | null;
+  checklist?: RawChecklistItemInput[] | null;
+  stickers?: RawStickerInput[] | null;
+}
+
+/**
  * Strips HTML tags, script elements, control characters, and null bytes from raw text.
  */
-export function sanitizeString(val: unknown, maxLength = 5000): string {
+export function sanitizeString(val: string | number | boolean | null | undefined, maxLength = 5000): string {
   if (val === null || val === undefined) return '';
   let str = String(val);
 
@@ -31,7 +96,7 @@ export function sanitizeString(val: unknown, maxLength = 5000): string {
 /**
  * Sanitizes and normalizes email addresses.
  */
-export function sanitizeEmail(val: unknown): string {
+export function sanitizeEmail(val: string | null | undefined): string {
   if (!val) return '';
   const clean = sanitizeString(val, 255).toLowerCase();
   // Basic sanity check to prevent newline injections in email strings
@@ -41,7 +106,7 @@ export function sanitizeEmail(val: unknown): string {
 /**
  * Sanitizes usernames (alphanumeric, underscores, hyphens, dots, @).
  */
-export function sanitizeUsername(val: unknown): string {
+export function sanitizeUsername(val: string | null | undefined): string {
   if (!val) return '';
   const raw = sanitizeString(val, 50);
   return raw.replace(/[^\w.@-]/g, '');
@@ -50,7 +115,7 @@ export function sanitizeUsername(val: unknown): string {
 /**
  * Validates and sanitizes image URLs, base64 data URIs, or static paths.
  */
-export function sanitizeUrl(val: unknown): string {
+export function sanitizeUrl(val: string | null | undefined): string {
   if (!val) return '';
   const url = sanitizeString(val, 1000000); // Allow base64 strings
 
@@ -65,9 +130,9 @@ export function sanitizeUrl(val: unknown): string {
 /**
  * Parses, clamps, and rounds latitude/longitude coordinates to 4 decimal places.
  */
-export function sanitizeCoordinates(coords: any): { lat: number; lng: number } {
-  const parse = (v: any, isLng: boolean): number => {
-    let num = typeof v === 'number' ? v : parseFloat(String(v));
+export function sanitizeCoordinates(coords: RawCoordinatesInput | null | undefined): { lat: number; lng: number } {
+  const parse = (v: number | string | null | undefined, isLng: boolean): number => {
+    let num = typeof v === 'number' ? v : parseFloat(String(v ?? ''));
     if (isNaN(num) || !isFinite(num)) {
       num = isLng ? 78.96 : 20.59;
     }
@@ -86,11 +151,11 @@ export function sanitizeCoordinates(coords: any): { lat: number; lng: number } {
 /**
  * Sanitizes destination checklist array.
  */
-export function sanitizeChecklist(checklist: unknown): Array<{ text: string; checked: boolean }> {
+export function sanitizeChecklist(checklist: RawChecklistItemInput[] | null | undefined): Array<{ text: string; checked: boolean }> {
   if (!Array.isArray(checklist)) return [];
 
   return checklist
-    .filter(item => item && typeof item === 'object')
+    .filter((item): item is RawChecklistItemInput => Boolean(item && typeof item === 'object'))
     .map(item => ({
       text: sanitizeString(item.text, 250),
       checked: Boolean(item.checked),
@@ -101,11 +166,20 @@ export function sanitizeChecklist(checklist: unknown): Array<{ text: string; che
 /**
  * Sanitizes destination scrapbook stickers array.
  */
-export function sanitizeStickers(stickers: unknown): Array<Record<string, any>> {
+export function sanitizeStickers(stickers: RawStickerInput[] | null | undefined): Array<{
+  id: string;
+  type: string;
+  emoji: string;
+  label: string;
+  x: number;
+  y: number;
+  rotate: number;
+  scale: number;
+}> {
   if (!Array.isArray(stickers)) return [];
 
   return stickers
-    .filter(s => s && typeof s === 'object')
+    .filter((s): s is RawStickerInput => Boolean(s && typeof s === 'object'))
     .map(s => {
       const x = typeof s.x === 'number' ? Math.max(0, Math.min(100, s.x)) : 50;
       const y = typeof s.y === 'number' ? Math.max(0, Math.min(100, s.y)) : 50;
@@ -129,11 +203,17 @@ export function sanitizeStickers(stickers: unknown): Array<Record<string, any>> 
 /**
  * Sanitizes user interactive map drawings array.
  */
-export function sanitizeMapDrawings(drawings: unknown): Array<Record<string, any>> {
+export function sanitizeMapDrawings(drawings: RawMapDrawingInput[] | null | undefined): Array<{
+  id: string;
+  type: string;
+  color: string;
+  strokeWidth: number;
+  points: Array<{ lat: number; lng: number }>;
+}> {
   if (!Array.isArray(drawings)) return [];
 
   return drawings
-    .filter(d => d && typeof d === 'object')
+    .filter((d): d is RawMapDrawingInput => Boolean(d && typeof d === 'object'))
     .map(d => ({
       id: sanitizeString(d.id, 100) || `drawing-${Date.now()}`,
       type: sanitizeString(d.type, 50) || 'path',
@@ -141,8 +221,8 @@ export function sanitizeMapDrawings(drawings: unknown): Array<Record<string, any
       strokeWidth: typeof d.strokeWidth === 'number' ? Math.max(1, Math.min(50, d.strokeWidth)) : 3,
       points: Array.isArray(d.points)
         ? d.points
-            .filter((p: any) => p && typeof p === 'object')
-            .map((p: any) => ({
+            .filter((p): p is RawDrawingPointInput => Boolean(p && typeof p === 'object'))
+            .map(p => ({
               lat: typeof p.lat === 'number' ? Math.max(-90, Math.min(90, p.lat)) : 0,
               lng: typeof p.lng === 'number' ? Math.max(-180, Math.min(180, p.lng)) : 0,
             }))
@@ -153,18 +233,25 @@ export function sanitizeMapDrawings(drawings: unknown): Array<Record<string, any
 }
 
 /**
- * Sanitizes destination record for database insertion.
+ * Sanitizes complex raw destination object ("d") sent from client payload into clean, typed database insert object.
  */
-export function sanitizeDestinationRecord(d: any, userId: string) {
+export function sanitizeDestinationRecord(d: RawDestinationInput | null | undefined, userId: string, index = 0) {
+  const rawId = sanitizeString(d?.id, 100);
+  const uniqueSuffix = `${Date.now()}-${index}-${Math.random().toString(36).substring(2, 7)}`;
+  const id = rawId ? rawId : `dest-${uniqueSuffix}`;
+
+  const cleanImage = sanitizeUrl(d?.image);
+  const fallbackImage = '/assets/jaipur_postcard.png';
+
   return {
-    id: sanitizeString(d?.id, 100) || `dest-${Date.now()}`,
+    id,
     user_id: userId,
     name: sanitizeString(d?.name, 150) || 'Untitled Destination',
     country: sanitizeString(d?.country, 100) || 'Unknown',
     coordinates: sanitizeCoordinates(d?.coordinates),
-    description: sanitizeString(d?.description, 2000),
-    image: sanitizeUrl(d?.image),
-    notes: sanitizeString(d?.notes, 5000),
+    description: sanitizeString(d?.description, 2000) || '',
+    image: cleanImage || fallbackImage,
+    notes: sanitizeString(d?.notes, 5000) || '',
     checklist: sanitizeChecklist(d?.checklist),
     stickers: sanitizeStickers(d?.stickers),
   };

@@ -75,7 +75,7 @@ export function LoginForm() {
 
       login(data.token, data.user);
       navigate("/admin");
-    } catch (err: unknown) {
+    } catch (err) {
       if (err instanceof Error) setError(err.message);
       else setError(String(err));
     } finally {

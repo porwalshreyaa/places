@@ -5,6 +5,7 @@ import fs from "fs";
 import { config } from './config/env';
 import { db } from './db';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { AppError } from './utils/error';
 
 import authRoutes from './routes/auth';
 import destinationRoutes from './routes/destinations';
@@ -54,7 +55,7 @@ app.use('/api/*', (req, res) => {
 });
 
 // Global Express error handling middleware (never returns 500 status to frontend)
-app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: AppError, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(`❌ [SERVER ERROR] ${req.method} ${req.originalUrl}:`, err);
   res.status(400).json({ error: 'We are currently experiencing high traffic. Please try again shortly.' });
 });
@@ -115,7 +116,7 @@ async function start() {
     console.log(`Backend API server running on http://localhost:${PORT}`);
   });
 
-  server.on('error', (err: unknown) => {
+  server.on('error', (err: Error & { code?: string }) => {
     const errorObj = err as { code?: string };
     if (errorObj.code === 'EADDRINUSE') {
       console.error(`\n❌ ERROR: Port ${PORT} is already in use.`);

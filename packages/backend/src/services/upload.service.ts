@@ -45,6 +45,9 @@ export class UploadService {
     // Create a FormData payload for Catbox
     const formData = new FormData();
     formData.append('reqtype', 'fileupload');
+    if (config.upload.userhash) {
+      formData.append('userhash', config.upload.userhash);
+    }
     
     // Create a Blob from the best compressed buffer
     const blob = new Blob([bestBuffer], { type: finalMimeType });
@@ -71,6 +74,45 @@ export class UploadService {
     } catch (err) {
       console.error('Failed to upload to Catbox:', err);
       throw err;
+    }
+  }
+
+  async deleteFromCatbox(fileUrls: string | string[]): Promise<boolean> {
+    if (!config.upload.userhash) {
+      console.warn('[Catbox Cleanup] Deletion requires CATBOX_USERHASH in environment variables');
+      return false;
+    }
+
+    const urls = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
+    const filenames = urls
+      .map(url => (url ? url.split('/').pop() || '' : ''))
+      .filter(Boolean)
+      .join(' ');
+
+    if (!filenames) return false;
+
+    try {
+      const formData = new FormData();
+      formData.append('reqtype', 'deletefile');
+      formData.append('userhash', config.upload.userhash);
+      formData.append('files', filenames);
+
+      const response = await fetch(config.upload.catboxUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.text();
+      const success = response.ok && result.toLowerCase().includes('deleted');
+      if (success) {
+        console.log(`[Catbox Cleanup] Successfully deleted from Catbox: ${filenames}`);
+      } else {
+        console.warn(`[Catbox Cleanup] Catbox delete response: ${result}`);
+      }
+      return success;
+    } catch (err) {
+      console.error('[Catbox Cleanup] Failed to delete from Catbox:', err);
+      return false;
     }
   }
 }

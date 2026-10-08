@@ -206,7 +206,7 @@ export default function DestinationDetail({
       } else {
         throw new Error(data.error || "File save failed.");
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Local upload failed, utilizing raw base64 as fallback:", err);
       // Fallback: Store raw base64 directly so the app still functions perfectly!
       setImage(base64Image);

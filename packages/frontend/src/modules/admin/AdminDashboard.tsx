@@ -31,7 +31,7 @@ export const AdminDashboard: React.FC = () => {
         try {
           const data = await api.get<AdminStats>('/api/admin/stats');
           setStats(data);
-        } catch (err: unknown) {
+        } catch (err) {
           setError(err instanceof Error ? err.message : String(err));
         } finally {
           setLoading(false);

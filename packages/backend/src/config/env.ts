@@ -14,5 +14,6 @@ export const config = {
   },
   upload: {
     catboxUrl: process.env.CATBOX_API_URL || 'https://catbox.moe/user/api.php',
+    userhash: process.env.CATBOX_USERHASH || '',
   }
 };

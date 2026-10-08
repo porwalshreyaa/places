@@ -136,22 +136,7 @@ export default function ScrapbookLayout({
       const width = node.offsetWidth;
       const height = node.scrollHeight; // Use scrollHeight to capture everything
       
-      const filter = (el: HTMLElement) => {
-        return !el.classList?.contains('no-screenshot');
-      };
-      
-      const blob = await toBlob(node, {
-        backgroundColor: '#faf8f5',
-        pixelRatio: 2,
-        cacheBust: true,
-        width,
-        height,
-        style: {
-          width: `${width}px`,
-          height: `${height}px`,
-          margin: '0'
-        },
-        filter: filter as unknown as (node: HTMLElement) => boolean
+        filter: (el: HTMLElement) => !el.classList?.contains('no-screenshot')
       });
       
       if (!blob) throw new Error('Could not generate image');
@@ -173,7 +158,7 @@ export default function ScrapbookLayout({
         const imageUrl = URL.createObjectURL(blob);
         setShareImageUrl(imageUrl);
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('Failed to share:', err);
       if (err instanceof Error) {
         alert('Could not capture the diary: ' + err.message);
