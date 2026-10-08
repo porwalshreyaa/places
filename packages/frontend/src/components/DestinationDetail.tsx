@@ -5,7 +5,7 @@ import {
   RotateCw, ArrowRight, RotateCcw, AlertCircle, HelpCircle, CornerDownRight, CheckCircle
 } from "lucide-react";
 import { Destination, ScrapSticker, ChecklistItem } from "../types";
-import { formatCoordinatesDisplay } from "../utils/coordinates";
+import { formatCoordinatesDisplay, sanitizeCoordinate } from "../utils/coordinates";
 
 
 interface DestinationDetailProps {
