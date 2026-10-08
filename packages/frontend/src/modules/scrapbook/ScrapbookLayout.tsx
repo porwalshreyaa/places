@@ -256,6 +256,7 @@ export default function ScrapbookLayout({
                   <div className="col-span-12 md:col-span-8 lg:col-span-8 xl:col-span-8 space-y-4">
                     <RepresentativeMap
                       destinations={destinations}
+                      selectedDestination={selectedDestination}
                       onPinClick={(dest) => setSelectedDestination(dest)}
                       onMapClick={(coords) => {
                         if (!isEditable) return;

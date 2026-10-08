@@ -9,6 +9,7 @@ import "leaflet/dist/leaflet.css";
 
 interface MapProps {
   destinations: Destination[];
+  selectedDestination?: Destination | null;
   onPinClick: (dest: Destination) => void;
   onMapClick: (coords: { lat: number; lng: number }) => void;
   isEditable: boolean;
@@ -28,7 +29,43 @@ const MapClickHandler = ({ onMapClick, canClick }: { onMapClick: (c: {lat: numbe
   return null;
 };
 
-const RepresentativeMap: React.FC<MapProps> = ({ destinations, onPinClick, onMapClick, isEditable, mapDrawings = [], onUpdateMapDrawings }) => {
+// Map size invalidation and auto-flyTo controller
+const MapViewController = ({ selectedDest, destinations }: { selectedDest?: Destination | null; destinations: Destination[] }) => {
+  const map = useMapEvents({});
+
+  useEffect(() => {
+    // Invalidate size after layout completes
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [map]);
+
+  useEffect(() => {
+    if (selectedDest && selectedDest.coordinates && typeof selectedDest.coordinates.lat === 'number' && typeof selectedDest.coordinates.lng === 'number' && !isNaN(selectedDest.coordinates.lat) && !isNaN(selectedDest.coordinates.lng)) {
+      map.flyTo([selectedDest.coordinates.lat, selectedDest.coordinates.lng], Math.max(map.getZoom(), 12), { duration: 1.2 });
+    }
+  }, [selectedDest, map]);
+
+  useEffect(() => {
+    if (!selectedDest && destinations.length > 0) {
+      const validCoords = destinations
+        .filter(d => d && d.coordinates && typeof d.coordinates.lat === 'number' && typeof d.coordinates.lng === 'number' && !isNaN(d.coordinates.lat) && !isNaN(d.coordinates.lng))
+        .map(d => [d.coordinates.lat, d.coordinates.lng] as [number, number]);
+
+      if (validCoords.length > 0) {
+        const bounds = L.latLngBounds(validCoords);
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+        }
+      }
+    }
+  }, [destinations, selectedDest, map]);
+
+  return null;
+};
+
+const RepresentativeMap: React.FC<MapProps> = ({ destinations, selectedDestination, onPinClick, onMapClick, isEditable, mapDrawings = [], onUpdateMapDrawings }) => {
   const [hoveredDest, setHoveredDest] = useState<Destination | null>(null);
 
   // Drawing State (synchronized with props)
@@ -39,7 +76,6 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, onPinClick, onMap
   const [activeStickerType, setActiveStickerType] = useState<'shrine' | 'boat' | 'coast' | 'dawn' | 'compass' | 'tree' | 'hills'>('shrine');
   
   useEffect(() => {
-    // If external mapDrawings changes completely, we can reset history, but usually we just want to load initial data.
     if (mapDrawings && undoHistory.length === 1 && undoHistory[0].length === 0 && mapDrawings.length > 0) {
       setUndoHistory([mapDrawings]);
     }
@@ -79,14 +115,10 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, onPinClick, onMap
     }
   };
 
-
-
   return (
-    <div id="representative-map-container" className="relative w-full aspect-[16/10] bg-[#fffdf9] rounded-2xl border-2 border-stone-200/80 shadow-xs overflow-hidden group select-none">
-      <div className="absolute inset-0 bg-[radial-gradient(#e5e1d8_1.2px,transparent_1.2px)] [background-size:20px_20px] opacity-75 pointer-events-none z-[1]" />
-      
-      <div className="absolute top-2.5 left-4 text-[9px] font-mono uppercase tracking-widest text-stone-400 z-50 pointer-events-none">Sacred Atlas Lat: 20.59 N</div>
-      <div className="absolute bottom-2.5 right-4 text-[9px] font-mono uppercase tracking-widest text-stone-400 z-50 pointer-events-none">Meridian Long: 78.96 E</div>
+    <div id="representative-map-container" className="relative w-full aspect-[16/10] bg-[#f8f5f0] rounded-2xl border-2 border-stone-200/80 shadow-xs overflow-hidden group select-none">
+      <div className="absolute top-2.5 left-4 text-[9px] font-mono uppercase tracking-widest text-stone-500 z-50 pointer-events-none bg-white/70 px-2 py-0.5 rounded backdrop-blur-xs">Sacred Atlas Lat: 20.59 N</div>
+      <div className="absolute bottom-2.5 right-4 text-[9px] font-mono uppercase tracking-widest text-stone-500 z-50 pointer-events-none bg-white/70 px-2 py-0.5 rounded backdrop-blur-xs">Meridian Long: 78.96 E</div>
 
       {isEditable && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-stone-200 z-[1000] flex items-center gap-2 pointer-events-auto transition-all">
@@ -125,20 +157,19 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, onPinClick, onMap
       <MapContainer
         center={[22.55, 82.75]}
         zoom={5}
-        minZoom={4}
-        maxZoom={8}
-        zoomControl={false}
+        minZoom={2}
+        maxZoom={19}
+        zoomControl={true}
         attributionControl={false}
         className={`w-full h-full z-10 ${activeTool === 'none' ? "cursor-grab" : "cursor-crosshair"}`}
-        style={{ background: 'transparent' }}
       >
         <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-          opacity={0.6}
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          maxZoom={19}
+          subdomains="abcd"
         />
 
-
-
+        <MapViewController selectedDest={selectedDestination} destinations={destinations} />
         <MapClickHandler onMapClick={onMapClick} canClick={activeTool === 'none'} />
 
         <DrawingCanvas 
@@ -149,8 +180,6 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, onPinClick, onMap
           color={drawColor}
           activeStickerType={activeStickerType}
         />
-
-
 
         {/* Destination Markers */}
         {destinations.map((dest, i) => {
@@ -169,7 +198,7 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, onPinClick, onMap
           const markerColor = colors[i % colors.length];
           
           const iconHtml = `
-            <div style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; border: 2.5px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); background-color: ${markerColor}; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); background-color: ${markerColor}; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;">
               ${dest.image ? `<img src="${dest.image}" style="width: 100%; height: 100%; object-fit: cover; display: block;" onerror="this.style.display='none'" />` : ''}
             </div>
           `;
@@ -177,8 +206,8 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, onPinClick, onMap
           const customIcon = L.divIcon({
             html: iconHtml,
             className: 'custom-destination-marker',
-            iconSize: [28, 28],
-            iconAnchor: [14, 14]
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
           });
 
           return (
