@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import { 
-  Compass, ImageIcon, Link as LinkIcon, LogOut, CheckCircle, Store
+  Compass, ImageIcon, Link as LinkIcon, LogOut, CheckCircle, Store, ArrowLeft
 } from "lucide-react";
 import RepresentativeMap from "../map/RepresentativeMap";
 import ScrapbookList from "./ScrapbookList";
@@ -10,6 +11,7 @@ import NewDestinationModal from "../../components/NewDestinationModal";
 import ThemeStoreModal, { Theme } from "../../components/ThemeStoreModal";
 import SharePreviewModal from "../../components/SharePreviewModal";
 import { Destination, MapDrawing } from "../../types";
+import { User } from "../../context/AuthContext";
 import { injectThemeColors } from "../../utils/themeInjector";
 import { toBlob } from "html-to-image";
 
@@ -31,6 +33,7 @@ interface ScrapbookLayoutProps {
   mapDrawings: MapDrawing[];
   onUpdateTheme?: (title: string, subtitle: string, themeId: string) => void;
   onUpdateMapDrawings?: (drawings: MapDrawing[]) => void;
+  currentUser?: User | null;
 }
 
 export default function ScrapbookLayout({
@@ -50,8 +53,10 @@ export default function ScrapbookLayout({
   themeColors,
   mapDrawings,
   onUpdateTheme,
-  onUpdateMapDrawings
+  onUpdateMapDrawings,
+  currentUser
 }: ScrapbookLayoutProps) {
+  const navigate = useNavigate();
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<"map" | "list">("map");
   
@@ -289,7 +294,24 @@ export default function ScrapbookLayout({
             </button>
             </>
           ) : (
-            <div className="w-full flex justify-end">
+            <div className="w-full flex justify-between items-center gap-2">
+              <div>
+                {currentUser ? (
+                  <button 
+                    onClick={() => navigate('/admin')}
+                    className="px-4 py-2 rounded-full bg-white text-stone-700 border border-stone-200 font-sans font-bold text-xs shadow-sm hover:bg-stone-50 transition-all flex items-center gap-1.5"
+                  >
+                    <ArrowLeft size={14} /> Back to My Profile
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => navigate('/login')}
+                    className="px-4 py-2 rounded-full bg-white text-stone-700 border border-stone-200 font-sans font-bold text-xs shadow-sm hover:bg-stone-50 transition-all flex items-center gap-1.5"
+                  >
+                    Login / Create Diary
+                  </button>
+                )}
+              </div>
               <button 
                 onClick={handleSnapshotAndShare}
                 disabled={isCapturing}

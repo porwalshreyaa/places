@@ -5,10 +5,12 @@ import { Destination, Theme, MapDrawing } from '../types';
 import { Compass } from 'lucide-react';
 import { injectThemeColors, resetThemeColors } from '../utils/themeInjector';
 import { api } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function PublicPage() {
   const { username } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [notesToSelf, setNotesToSelf] = useState("");
@@ -67,10 +69,10 @@ export default function PublicPage() {
           <h2 className="font-serif text-2xl text-stone-800 font-bold mb-2">Diary Not Available</h2>
           <p className="font-serif text-stone-500 mb-6">{error}</p>
           <button 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate(user ? '/admin' : '/login')}
             className="px-6 py-2.5 bg-brand-400 hover:bg-brand-500 text-white rounded-full font-sans font-bold text-sm shadow-sm transition-all"
           >
-            Create Your Own
+            {user ? 'Back to My Diary' : 'Create Your Own'}
           </button>
         </div>
       </div>
@@ -88,6 +90,8 @@ export default function PublicPage() {
       themeSubtitle={themeSubtitle}
       themeId={themeId}
       mapDrawings={mapDrawings}
+      currentUser={user}
     />
   );
 }
+
