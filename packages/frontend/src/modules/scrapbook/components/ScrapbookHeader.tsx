@@ -25,6 +25,7 @@ export interface ScrapbookHeaderProps {
   themeTitle: string;
   themeSubtitle: string;
   setIsThemeStoreOpen: (open: boolean) => void;
+  saveStatus?: 'saved' | 'saving' | 'error';
 }
 
 export default function ScrapbookHeader({
@@ -49,6 +50,7 @@ export default function ScrapbookHeader({
   themeTitle,
   themeSubtitle,
   setIsThemeStoreOpen,
+  saveStatus = 'saved',
 }: ScrapbookHeaderProps) {
   const navigate = useNavigate();
 
@@ -58,7 +60,34 @@ export default function ScrapbookHeader({
       <div className="flex justify-between items-center mb-4 no-screenshot">
         {isEditable ? (
           <>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              {/* Save Status Badge */}
+              <div
+                className={`px-3 py-1.5 rounded-full font-mono text-[11px] font-bold border transition-all flex items-center gap-1.5 ${
+                  saveStatus === 'saving'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : saveStatus === 'error'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}
+              >
+                {saveStatus === 'saving' ? (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                    <span>Saving...</span>
+                  </>
+                ) : saveStatus === 'error' ? (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-rose-500" />
+                    <span>Syncing...</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>Saved</span>
+                  </>
+                )}
+              </div>
               <button
                 onClick={onTogglePublic}
                 className={`px-4 py-2 rounded-full font-sans font-bold text-xs border shadow-sm transition-all flex items-center gap-2 ${

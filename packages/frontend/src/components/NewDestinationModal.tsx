@@ -61,6 +61,29 @@ export default function NewDestinationModal({
     initialCoords ? sanitizeCoordinate(initialCoords.lng, true, 4) : 78.96
   );
   
+  // Geocoding state
+  const [locationSearchQuery, setLocationSearchQuery] = useState("");
+  const [locationSearchResults, setLocationSearchResults] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+
+  const handleSearchLocation = async (query: string) => {
+    if (!query.trim()) return;
+    setIsSearchingLocation(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query.trim())}&limit=5`
+      );
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setLocationSearchResults(data);
+      }
+    } catch (err) {
+      console.error("Geocoding search failed:", err);
+    } finally {
+      setIsSearchingLocation(false);
+    }
+  };
+
   // Choose photo
   const [image, setImage] = useState(PRESET_IMAGES[0].url);
   const [customImage, setCustomImage] = useState<string | null>(null);
@@ -268,6 +291,54 @@ export default function NewDestinationModal({
                     </span>
                   ) : (
                     <span className="text-[9px] text-stone-400 italic">Adjust coordinates</span>
+                  )}
+                </div>
+
+                {/* OpenStreetMap Place Search */}
+                <div className="mb-3">
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      placeholder="Search real location (e.g. Dwarika, Gujarat)..."
+                      value={locationSearchQuery}
+                      onChange={(e) => setLocationSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSearchLocation(locationSearchQuery);
+                        }
+                      }}
+                      className="flex-1 text-xs px-3 py-1.5 rounded-xl bg-white border border-stone-200 font-serif focus:outline-none focus:ring-1 focus:ring-brand-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSearchLocation(locationSearchQuery)}
+                      disabled={isSearchingLocation}
+                      className="px-3 py-1.5 bg-brand-400 text-white rounded-xl text-xs font-serif font-bold hover:bg-brand-500 transition-colors shrink-0"
+                    >
+                      {isSearchingLocation ? "..." : "Search"}
+                    </button>
+                  </div>
+
+                  {locationSearchResults.length > 0 && (
+                    <div className="mt-2 max-h-32 overflow-y-auto bg-white rounded-xl border border-stone-200 shadow-sm divide-y divide-stone-100">
+                      {locationSearchResults.map((res, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            const newLat = sanitizeCoordinate(parseFloat(res.lat), false, 4);
+                            const newLng = sanitizeCoordinate(parseFloat(res.lon), true, 4);
+                            setCoordLat(newLat);
+                            setCoordLng(newLng);
+                            setLocationSearchResults([]);
+                          }}
+                          className="w-full text-left p-2 text-[10px] text-stone-700 hover:bg-brand-50 hover:text-brand-700 transition-colors block truncate font-serif"
+                        >
+                          📍 {res.display_name}
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
 

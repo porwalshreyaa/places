@@ -46,6 +46,14 @@ export default function DestinationDetail({
   const [checklist, setChecklist] = useState<ChecklistItem[]>(destination.checklist);
   const [stickers, setStickers] = useState<ScrapSticker[]>(destination.stickers);
 
+  // Coordinate editing & geocoding state
+  const [coordLat, setCoordLat] = useState<number | string>(destination.coordinates?.lat ?? 20.59);
+  const [coordLng, setCoordLng] = useState<number | string>(destination.coordinates?.lng ?? 78.96);
+  const [isEditingCoords, setIsEditingCoords] = useState(false);
+  const [locationSearchQuery, setLocationSearchQuery] = useState("");
+  const [locationSearchResults, setLocationSearchResults] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+
   // Drag and drop / local upload state
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -59,6 +67,36 @@ export default function DestinationDetail({
   // Dragging states
   const [activeStickerId, setActiveStickerId] = useState<string | null>(null);
   const polaroidFrameRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestUpdatedRef = useRef<Destination>(destination);
+
+  // Clean up timer on unmount and ensure pending debounced changes flush
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        onUpdate(latestUpdatedRef.current);
+      }
+    };
+  }, []);
+
+  const handleSearchLocation = async (query: string) => {
+    if (!query.trim()) return;
+    setIsSearchingLocation(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query.trim())}&limit=5`
+      );
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setLocationSearchResults(data);
+      }
+    } catch (err) {
+      console.error("Geocoding failed:", err);
+    } finally {
+      setIsSearchingLocation(false);
+    }
+  };
 
   // Update parent when any local field changes so changes are instantly reflected on map previews!
   const triggerSave = (
@@ -68,8 +106,14 @@ export default function DestinationDetail({
     currentNotes = notes,
     currentImg = image,
     currentChecklist = checklist,
-    currentStickers = stickers
+    currentStickers = stickers,
+    isDebounced = false,
+    currentLat = coordLat,
+    currentLng = coordLng
   ) => {
+    const parsedLat = sanitizeCoordinate(currentLat, false, 4);
+    const parsedLng = sanitizeCoordinate(currentLng, true, 4);
+
     const updated: Destination = {
       ...destination,
       name: currentName,
@@ -79,8 +123,24 @@ export default function DestinationDetail({
       image: currentImg,
       checklist: currentChecklist,
       stickers: currentStickers,
+      coordinates: { lat: parsedLat, lng: parsedLng },
     };
-    onUpdate(updated);
+
+    latestUpdatedRef.current = updated;
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
+    if (isDebounced) {
+      debounceTimerRef.current = setTimeout(() => {
+        onUpdate(updated);
+        debounceTimerRef.current = null;
+      }, 300);
+    } else {
+      onUpdate(updated);
+    }
   };
 
   // Sticker Canvas Actions
@@ -293,7 +353,10 @@ export default function DestinationDetail({
                   value={name}
                   onChange={(e) => {
                     setName(e.target.value);
-                    triggerSave(e.target.value, country, description, notes, image, checklist);
+                    triggerSave(e.target.value, country, description, notes, image, checklist, stickers, true);
+                  }}
+                  onBlur={() => {
+                    triggerSave(name, country, description, notes, image, checklist, stickers, false);
                   }}
                   className="font-serif text-2xl font-bold text-stone-800 border-b border-transparent hover:border-dashed hover:border-stone-400 focus:border-brand-400 focus:outline-none bg-transparent w-full transition-all"
                   placeholder="Name of destination..."
@@ -311,7 +374,10 @@ export default function DestinationDetail({
                   value={country}
                   onChange={(e) => {
                     setCountry(e.target.value);
-                    triggerSave(name, e.target.value, description, notes, image, checklist);
+                    triggerSave(name, e.target.value, description, notes, image, checklist, stickers, true);
+                  }}
+                  onBlur={() => {
+                    triggerSave(name, country, description, notes, image, checklist, stickers, false);
                   }}
                   className="bg-transparent border-b border-transparent hover:border-dashed hover:border-stone-400 focus:border-brand-400 focus:outline-none text-brand-500 font-bold uppercase py-0.5 focus:text-brand-600 transition-all"
                   placeholder="Country Name..."
@@ -430,7 +496,10 @@ export default function DestinationDetail({
                     value={description}
                     onChange={(e) => {
                       setDescription(e.target.value);
-                      triggerSave(name, country, e.target.value, notes, image, checklist);
+                      triggerSave(name, country, e.target.value, notes, image, checklist, stickers, true);
+                    }}
+                    onBlur={() => {
+                      triggerSave(name, country, description, notes, image, checklist, stickers, false);
                     }}
                     className="font-caveat text-xl font-bold italic text-stone-700 bg-transparent border-b border-stone-100 hover:border-dashed focus:border-brand-400 focus:outline-none w-full text-center transition-all"
                     placeholder="Describe your cozy dream..."
@@ -442,9 +511,120 @@ export default function DestinationDetail({
                 )}
               </div>
 
-              {/* Grid outline lines on the frame background */}
-              <div className="absolute bottom-1 right-3 text-[9px] font-mono text-stone-400 select-none">
-                {formatCoordinatesDisplay(destination.coordinates?.lat, destination.coordinates?.lng, 4)}
+              {/* Interactive Coordinates Badge & Geocoding Search Panel */}
+              <div className="absolute bottom-1 right-3 text-[9px] font-mono text-stone-500 select-none z-20">
+                {isEditable ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingCoords(!isEditingCoords)}
+                    className="hover:text-brand-600 hover:underline cursor-pointer bg-white/80 px-2 py-0.5 rounded border border-stone-200 shadow-xs flex items-center gap-1"
+                    title="Click to edit pin location or search coordinates"
+                  >
+                    <span>{formatCoordinatesDisplay(coordLat, coordLng, 4)}</span>
+                    <span className="text-[8px] text-brand-500">✏️ Fix</span>
+                  </button>
+                ) : (
+                  <span>{formatCoordinatesDisplay(coordLat, coordLng, 4)}</span>
+                )}
+
+                {/* Inline Coordinate & Location Search Popover */}
+                {isEditingCoords && isEditable && (
+                  <div className="absolute right-0 bottom-6 bg-white p-3 rounded-xl shadow-2xl border border-stone-200 w-72 z-50 text-left font-sans">
+                    <div className="flex items-center justify-between border-b border-stone-200 pb-1.5 mb-2">
+                      <span className="font-bold text-xs text-stone-800">📍 Edit Location Pin</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingCoords(false)}
+                        className="text-stone-400 hover:text-stone-700 text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {/* OpenStreetMap Nominatim Search */}
+                    <div className="mb-3">
+                      <label className="text-[10px] font-mono font-bold text-stone-500 uppercase block mb-1">
+                        Search Real Location
+                      </label>
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          placeholder="E.g., Dwarika, Gujarat..."
+                          value={locationSearchQuery}
+                          onChange={(e) => setLocationSearchQuery(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleSearchLocation(locationSearchQuery)}
+                          className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-stone-300 font-serif focus:outline-none focus:ring-1 focus:ring-brand-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSearchLocation(locationSearchQuery)}
+                          disabled={isSearchingLocation}
+                          className="px-2.5 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-bold hover:bg-brand-600 transition-colors"
+                        >
+                          {isSearchingLocation ? "..." : "Find"}
+                        </button>
+                      </div>
+
+                      {/* Search Results Dropdown */}
+                      {locationSearchResults.length > 0 && (
+                        <div className="mt-1.5 max-h-32 overflow-y-auto bg-stone-50 rounded-lg border border-stone-200 divide-y divide-stone-200">
+                          {locationSearchResults.map((res, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                const newLat = parseFloat(parseFloat(res.lat).toFixed(4));
+                                const newLng = parseFloat(parseFloat(res.lon).toFixed(4));
+                                setCoordLat(newLat);
+                                setCoordLng(newLng);
+                                setLocationSearchResults([]);
+                                setIsEditingCoords(false);
+                                triggerSave(name, country, description, notes, image, checklist, stickers, false, newLat, newLng);
+                              }}
+                              className="w-full text-left p-1.5 text-[10px] text-stone-700 hover:bg-brand-50 hover:text-brand-800 transition-colors block truncate font-serif"
+                            >
+                              📍 {res.display_name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Manual Lat/Lng Numeric Inputs */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[9px] font-mono text-stone-400 block mb-0.5">Latitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={coordLat}
+                          onChange={(e) => setCoordLat(e.target.value)}
+                          onBlur={() => {
+                            const clean = sanitizeCoordinate(coordLat, false, 4);
+                            setCoordLat(clean);
+                            triggerSave(name, country, description, notes, image, checklist, stickers, false, clean, coordLng);
+                          }}
+                          className="w-full text-xs px-2 py-1 rounded-md border border-stone-300 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-mono text-stone-400 block mb-0.5">Longitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={coordLng}
+                          onChange={(e) => setCoordLng(e.target.value)}
+                          onBlur={() => {
+                            const clean = sanitizeCoordinate(coordLng, true, 4);
+                            setCoordLng(clean);
+                            triggerSave(name, country, description, notes, image, checklist, stickers, false, coordLat, clean);
+                          }}
+                          className="w-full text-xs px-2 py-1 rounded-md border border-stone-300 font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -530,7 +710,10 @@ export default function DestinationDetail({
                   value={notes}
                   onChange={(e) => {
                     setNotes(e.target.value);
-                    triggerSave(name, country, description, e.target.value, image, checklist);
+                    triggerSave(name, country, description, e.target.value, image, checklist, stickers, true);
+                  }}
+                  onBlur={() => {
+                    triggerSave(name, country, description, notes, image, checklist, stickers, false);
                   }}
                   rows={4}
                   className="w-full text-xl text-stone-700 font-caveat leading-[28px] focus:outline-none bg-transparent resize-none border-none font-bold"

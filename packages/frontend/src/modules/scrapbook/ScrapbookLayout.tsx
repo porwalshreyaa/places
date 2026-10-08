@@ -37,6 +37,7 @@ interface ScrapbookLayoutProps {
   onUpdateTheme?: (title: string, subtitle: string, themeId: string) => void;
   onUpdateMapDrawings?: (drawings: MapDrawing[]) => void;
   currentUser?: User | null;
+  saveStatus?: 'saved' | 'saving' | 'error';
 }
 
 export default function ScrapbookLayout({
@@ -58,6 +59,7 @@ export default function ScrapbookLayout({
   onUpdateTheme,
   onUpdateMapDrawings,
   currentUser,
+  saveStatus = 'saved',
 }: ScrapbookLayoutProps) {
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<"map" | "list">("map");
@@ -185,6 +187,7 @@ export default function ScrapbookLayout({
         themeTitle={themeTitle}
         themeSubtitle={themeSubtitle}
         setIsThemeStoreOpen={setIsThemeStoreOpen}
+        saveStatus={saveStatus}
       />
 
       {/* MAIN CONTENT */}

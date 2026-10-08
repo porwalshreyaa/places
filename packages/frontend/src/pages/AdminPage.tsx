@@ -12,6 +12,16 @@ export default function AdminPage() {
   
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const saveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -46,16 +56,23 @@ export default function AdminPage() {
     }
   };
 
-  const handleSaveDestinations = async (updatedList: Destination[]) => {
-    const previousList = destinations;
+  const handleSaveDestinations = (updatedList: Destination[]) => {
     setDestinations(updatedList);
-    try {
-      await api.post("/api/destinations", updatedList);
-    } catch (error) {
-      console.error("Failed to persist wishlist destinations:", error);
-      setDestinations(previousList);
-      alert("⚠️ Failed to save destinations to server! Changes have been reverted.");
+    setSaveStatus('saving');
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
     }
+
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await api.post("/api/destinations", updatedList);
+        setSaveStatus('saved');
+      } catch (error) {
+        console.error("Failed to persist wishlist destinations:", error);
+        setSaveStatus('error');
+      }
+    }, 800);
   };
 
   const handleUpdateNotes = async (notes: string) => {
@@ -140,6 +157,7 @@ export default function AdminPage() {
       mapDrawings={user.map_drawings || []}
       onUpdateTheme={handleUpdateTheme}
       onUpdateMapDrawings={handleUpdateMapDrawings}
+      saveStatus={saveStatus}
     />
   );
 }
