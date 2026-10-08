@@ -154,6 +154,17 @@ const RepresentativeMap: React.FC<MapProps> = ({ destinations, onPinClick, onMap
 
         {/* Destination Markers */}
         {destinations.map((dest, i) => {
+          if (
+            !dest ||
+            !dest.coordinates ||
+            typeof dest.coordinates.lat !== 'number' ||
+            typeof dest.coordinates.lng !== 'number' ||
+            isNaN(dest.coordinates.lat) ||
+            isNaN(dest.coordinates.lng)
+          ) {
+            return null;
+          }
+
           const colors = ["#ec4899", "#3b82f6", "#eab308", "#14b8a6", "#a855f7", "#f97316"];
           const markerColor = colors[i % colors.length];
           

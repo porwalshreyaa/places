@@ -6,7 +6,8 @@ import { Destination } from '../models/destinations.model';
 
 export class DestinationsService {
   async getUserDestinations(userId: string): Promise<Destination[]> {
-    return destinationsCrud.findByUserId(userId);
+    const rawDestinations = await destinationsCrud.findByUserId(userId);
+    return rawDestinations.map((d, index) => sanitizeDestinationRecord(d, userId, index));
   }
 
   async saveUserDestinations(userId: string, newDestinations: RawDestinationInput[]) {

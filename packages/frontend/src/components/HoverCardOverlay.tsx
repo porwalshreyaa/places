@@ -18,6 +18,17 @@ const HoverCardOverlay: React.FC<HoverCardOverlayProps> = ({ hoveredDest }) => {
     }
 
     const updatePosition = () => {
+      if (
+        !hoveredDest ||
+        !hoveredDest.coordinates ||
+        typeof hoveredDest.coordinates.lat !== 'number' ||
+        typeof hoveredDest.coordinates.lng !== 'number' ||
+        isNaN(hoveredDest.coordinates.lat) ||
+        isNaN(hoveredDest.coordinates.lng)
+      ) {
+        setPosition(null);
+        return;
+      }
       const point = map.latLngToContainerPoint([hoveredDest.coordinates.lat, hoveredDest.coordinates.lng]);
       setPosition({ x: point.x, y: point.y });
     };

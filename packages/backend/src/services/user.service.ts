@@ -2,7 +2,7 @@ import { usersCrud } from '../crud/users.crud';
 import { themesCrud } from '../crud/themes.crud';
 import { destinationsCrud } from '../crud/destinations.crud';
 import { authService } from './auth.service';
-import { sanitizeUsername, sanitizeEmail, sanitizeString, sanitizeMapDrawings } from '../utils/sanitizer';
+import { sanitizeUsername, sanitizeEmail, sanitizeString, sanitizeMapDrawings, sanitizeDestinationRecord } from '../utils/sanitizer';
 import {
   BadRequestError,
   UnauthorizedError,
@@ -176,7 +176,8 @@ export class UserService {
       throw new ForbiddenError('This profile is private');
     }
 
-    const userDestinations = await destinationsCrud.findByUserId(user.id);
+    const rawDestinations = await destinationsCrud.findByUserId(user.id);
+    const userDestinations = rawDestinations.map((d, index) => sanitizeDestinationRecord(d, user.id, index));
 
     let theme = null;
     if ((user as { theme_id?: string }).theme_id) {

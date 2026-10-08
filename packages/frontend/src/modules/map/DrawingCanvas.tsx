@@ -127,16 +127,25 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ drawings, onAddDrawing, o
       )}
 
       {drawings.map(d => {
+        if (!d) return null;
         if (d.type === 'pencil') {
-          return <Polyline key={d.id} positions={d.points.map(p => [p.lat, p.lng])} pathOptions={{ color: d.color, weight: d.weight, lineCap: 'round', lineJoin: 'round', interactive: true }} eventHandlers={{ click: () => handleErase(d.id) }} />;
+          if (!Array.isArray(d.points)) return null;
+          const validPoints = d.points.filter(p => p && typeof p.lat === 'number' && typeof p.lng === 'number' && !isNaN(p.lat) && !isNaN(p.lng));
+          if (validPoints.length === 0) return null;
+          return <Polyline key={d.id} positions={validPoints.map(p => [p.lat, p.lng])} pathOptions={{ color: d.color, weight: d.weight, lineCap: 'round', lineJoin: 'round', interactive: true }} eventHandlers={{ click: () => handleErase(d.id) }} />;
         }
         if (d.type === 'polygon') {
-          return <Polygon key={d.id} positions={d.points.map(p => [p.lat, p.lng])} pathOptions={{ color: d.color, fillColor: d.fillColor, fillOpacity: d.fillOpacity, weight: d.weight, interactive: true }} eventHandlers={{ click: () => handleErase(d.id) }} />;
+          if (!Array.isArray(d.points)) return null;
+          const validPoints = d.points.filter(p => p && typeof p.lat === 'number' && typeof p.lng === 'number' && !isNaN(p.lat) && !isNaN(p.lng));
+          if (validPoints.length === 0) return null;
+          return <Polygon key={d.id} positions={validPoints.map(p => [p.lat, p.lng])} pathOptions={{ color: d.color, fillColor: d.fillColor, fillOpacity: d.fillOpacity, weight: d.weight, interactive: true }} eventHandlers={{ click: () => handleErase(d.id) }} />;
         }
         if (d.type === 'text') {
+          if (!d.point || typeof d.point.lat !== 'number' || typeof d.point.lng !== 'number' || isNaN(d.point.lat) || isNaN(d.point.lng)) return null;
           return <Marker key={d.id} position={[d.point.lat, d.point.lng]} icon={createTextIcon(d.text, d.color)} eventHandlers={{ click: () => handleErase(d.id) }} />;
         }
         if (d.type === 'sticker') {
+          if (!d.point || typeof d.point.lat !== 'number' || typeof d.point.lng !== 'number' || isNaN(d.point.lat) || isNaN(d.point.lng)) return null;
           return <Marker key={d.id} position={[d.point.lat, d.point.lng]} icon={createStickerIcon(d.stickerType, d.scale)} eventHandlers={{ click: () => handleErase(d.id) }} />;
         }
         return null;
