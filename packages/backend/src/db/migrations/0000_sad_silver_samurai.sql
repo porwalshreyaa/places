@@ -1,4 +1,4 @@
-CREATE TABLE "users" (
+CREATE TABLE IF NOT EXISTS "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"username" text NOT NULL,
 	"password" text NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_username_unique" UNIQUE("username")
 );
 --> statement-breakpoint
-CREATE TABLE "destinations" (
+CREATE TABLE IF NOT EXISTS "destinations" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" uuid NOT NULL,
 	"name" text NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE "destinations" (
 	"stickers" jsonb DEFAULT '[]' NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "themes" (
+CREATE TABLE IF NOT EXISTS "themes" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"creator_id" uuid,
@@ -36,5 +36,14 @@ CREATE TABLE "themes" (
 	CONSTRAINT "themes_color_hash_unique" UNIQUE("color_hash")
 );
 --> statement-breakpoint
-ALTER TABLE "destinations" ADD CONSTRAINT "destinations_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "themes" ADD CONSTRAINT "themes_creator_id_users_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+DO $$ BEGIN
+ ALTER TABLE "destinations" ADD CONSTRAINT "destinations_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "themes" ADD CONSTRAINT "themes_creator_id_users_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
