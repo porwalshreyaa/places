@@ -1,15 +1,46 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 import * as schema from '../schema';
 import { config } from '../config/env';
 
-// Create a PostgreSQL connection pool
-// Default to a local database if DATABASE_URL is not set
-const connectionString = config.db.url;
+const rawConnectionString = config.db.url;
 
-const pool = new Pool({
-  connectionString,
-  ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false }
-});
+function getPoolConfig(connectionString: string): PoolConfig {
+  const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+
+  if (isLocal) {
+    return {
+      connectionString,
+      ssl: false,
+    };
+  }
+
+  // Cloud Postgres (Render, Neon, Supabase, Heroku, Aiven, AWS RDS, etc.)
+  // Strip `sslmode` and `ssl` query params from connectionString so pg-connection-string
+  // doesn't override rejectUnauthorized: false with strict certificate verification.
+  let cleanConnectionString = connectionString;
+  try {
+    const parsedUrl = new URL(connectionString);
+    parsedUrl.searchParams.delete('sslmode');
+    parsedUrl.searchParams.delete('ssl');
+    parsedUrl.searchParams.delete('uselibpqcompat');
+    cleanConnectionString = parsedUrl.toString();
+  } catch {
+    cleanConnectionString = connectionString
+      .replace(/([?&])sslmode=[^&]*/gi, '')
+      .replace(/([?&])ssl=[^&]*/gi, '')
+      .replace(/\?&/, '?')
+      .replace(/[?&]$/, '');
+  }
+
+  return {
+    connectionString: cleanConnectionString,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  };
+}
+
+const pool = new Pool(getPoolConfig(rawConnectionString));
 
 export const db = drizzle(pool, { schema });

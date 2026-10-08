@@ -59,6 +59,11 @@ app.use((err: unknown, req: express.Request, res: express.Response, _next: expre
   res.status(400).json({ error: 'We are currently experiencing high traffic. Please try again shortly.' });
 });
 
+// Health check endpoint for Render / cloud deployment platforms
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // ----------------------------------------
 // SERVE FRONTEND (PRODUCTION / MONOLITH)
 // ----------------------------------------
@@ -76,6 +81,10 @@ if (staticDir) {
   app.use(express.static(staticDir));
   app.get("*", (req, res) => {
     res.sendFile(path.join(staticDir, "index.html"));
+  });
+} else {
+  app.get("/", (_req, res) => {
+    res.status(200).json({ status: "ok", service: "ghoomi-backend" });
   });
 }
 
